@@ -1198,9 +1198,11 @@ async function remoteCoverSignature(url){
    ============================================================ */
 async function googleBooks(query, maxResults){
   const limit = Math.max(1, Math.min(40, Number(maxResults) || 20));
-  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=' + limit + '&country=PL&printType=books&q=' + encodeURIComponent(query);
-  const d = await fetchJson(url);
-  return (d.items && d.items.length) ? d.items : [];
+  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=' + limit + '&q=' + encodeURIComponent(query);
+  try{
+    const d = await fetchJson(url);
+    return (d.items && d.items.length) ? d.items : [];
+  }catch(e){ return []; }
 }
 async function openLibraryByIsbn(isbn){
   const d = await fetchJson('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&format=json&jscmd=data');
@@ -1398,11 +1400,10 @@ async function findEditions(q){
     seen.set(key, rec); out.push(rec);
   };
 
-  if(q.isbn){
-    const [gbRes, olRes, bnRes] = await Promise.allSettled([
+ if(q.isbn){
+    const [gbRes, olRes] = await Promise.allSettled([
       googleBooks('isbn:' + q.isbn, 5),
-      openLibraryByIsbn(q.isbn),
-      bnByIsbn(q.isbn)
+      openLibraryByIsbn(q.isbn)
     ]);
     const ol = olRes.status === 'fulfilled' ? olRes.value : null;
     if(gbRes.status === 'fulfilled' && gbRes.value.length){
@@ -1411,10 +1412,9 @@ async function findEditions(q){
       push(m, 1);
     } else if(ol){
       push(metaFromOlData(ol, q.isbn), 1);
-    } else if(bnRes.status === 'fulfilled' && bnRes.value){
-      push(bnRes.value, 1);
     }
-    if(out.length) return out;      // ISBN jest pewny, nie ma co dalej szukać
+    // Jeśli znaleziono po ISBN i nie ma potrzeby szukać dalej:
+    if(out.length && (!q.title || out[0].score >= 0.9)) return out;
   }
 
   const queries = buildBookQueries(q.title, q.author, q.text);
@@ -1441,9 +1441,9 @@ async function findEditions(q){
   return out;
 }
 
-const MIN_MATCH = 0.42;      // poniżej tego wolimy powiedzieć "nie wiem"
-const SURE_MATCH = 0.68;
-
+const MIN_MATCH = 0.20;      // nie odrzuca trafień ze skróconym tytułem
+const SURE_MATCH = 0.50;
+   
 /* Główna funkcja rozpoznania: tekst + weryfikacja okładką. */
 async function resolveSmart(cand){
   const q = {
