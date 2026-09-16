@@ -1414,10 +1414,11 @@ async function findEditions(q){
     seen.set(key, rec); out.push(rec);
   };
 
- if(q.isbn){
-    const [gbRes, olRes] = await Promise.allSettled([
+  if(q.isbn){
+    const [gbRes, olRes, bnRes] = await Promise.allSettled([
       googleBooks('isbn:' + q.isbn, 5),
-      openLibraryByIsbn(q.isbn)
+      openLibraryByIsbn(q.isbn),
+      bnByIsbn(q.isbn)
     ]);
     const ol = olRes.status === 'fulfilled' ? olRes.value : null;
     if(gbRes.status === 'fulfilled' && gbRes.value.length){
@@ -1426,9 +1427,10 @@ async function findEditions(q){
       push(m, 1);
     } else if(ol){
       push(metaFromOlData(ol, q.isbn), 1);
+    } else if(bnRes.status === 'fulfilled' && bnRes.value){
+      push(bnRes.value, 1);
     }
-    // Jeśli znaleziono po ISBN i nie ma potrzeby szukać dalej:
-    if(out.length && (!q.title || out[0].score >= 0.9)) return out;
+    if(out.length) return out;
   }
 
   const queries = buildBookQueries(q.title, q.author, q.text);
@@ -1448,13 +1450,13 @@ async function findEditions(q){
     push(meta, textScoreFor(meta, q));
   });
   (bnRun || []).forEach(meta=>{
-    push(meta, textScoreFor(meta, q) + 0.05);
+    push(meta, textScoreFor(meta, q) + 0.1);
   });
 
   out.sort((a,b)=>b.textScore-a.textScore);
   return out;
 }
-
+   
 const MIN_MATCH = 0.20;      // nie odrzuca trafień ze skróconym tytułem
 const SURE_MATCH = 0.50;
    
