@@ -44,34 +44,34 @@
   --mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 }
 :root[data-theme="dark"]{
-  --paper:#14171B;
-  --surface:#1B1F25;
-  --surface-2:#232830;
-  --ink:#E9E6DE;
-  --ink-2:#A2A8B1;
-  --ink-3:#767C86;
-  --line:#2C323A;
-  --line-strong:#3D444E;
-  --green:#5FB294;
-  --green-2:#79C6A9;
-  --green-soft:#1D2C27;
-  --ox:#D98079;
-  --brass:#D6A94E;
-  --brass-soft:#2A2418;
-  --ok:#5FB294;
-  --warn:#D6A94E;
-  --err:#E0837B;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+  --paper:#0B1118;
+  --surface:#121C27;
+  --surface-2:#192736;
+  --ink:#F3F6F8;
+  --ink-2:#BCC7D1;
+  --ink-3:#8495A5;
+  --line:#26384A;
+  --line-strong:#3C5267;
+  --green:#73D2AE;
+  --green-2:#93E4C4;
+  --green-soft:#112B29;
+  --ox:#F18D86;
+  --brass:#F0C66A;
+  --brass-soft:#302819;
+  --ok:#73D2AE;
+  --warn:#F0C66A;
+  --err:#FF9C95;
+  --shadow:0 1px 1px rgba(0,0,0,.45), 0 16px 42px rgba(0,0,0,.28);
 }
 @media (prefers-color-scheme: dark){
   :root[data-theme="auto"]{
-    --paper:#14171B; --surface:#1B1F25; --surface-2:#232830;
-    --ink:#E9E6DE; --ink-2:#A2A8B1; --ink-3:#767C86;
-    --line:#2C323A; --line-strong:#3D444E;
-    --green:#5FB294; --green-2:#79C6A9; --green-soft:#1D2C27;
-    --ox:#D98079; --brass:#D6A94E; --brass-soft:#2A2418;
-    --ok:#5FB294; --warn:#D6A94E; --err:#E0837B;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+    --paper:#0B1118; --surface:#121C27; --surface-2:#192736;
+    --ink:#F3F6F8; --ink-2:#BCC7D1; --ink-3:#8495A5;
+    --line:#26384A; --line-strong:#3C5267;
+    --green:#73D2AE; --green-2:#93E4C4; --green-soft:#112B29;
+    --ox:#F18D86; --brass:#F0C66A; --brass-soft:#302819;
+    --ok:#73D2AE; --warn:#F0C66A; --err:#FF9C95;
+    --shadow:0 1px 1px rgba(0,0,0,.45), 0 16px 42px rgba(0,0,0,.28);
   }
 }
 
@@ -90,6 +90,12 @@ body{
   min-height:100dvh;
   padding-bottom:env(safe-area-inset-bottom);
 }
+:root[data-theme="dark"] body{
+  background:radial-gradient(900px 520px at 8% -10%, #173A39 0%, transparent 58%), var(--paper);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-theme="auto"] body{background:radial-gradient(900px 520px at 8% -10%, #173A39 0%, transparent 58%), var(--paper);}
+}
 h1,h2,h3{font-family:var(--serif); font-weight:600; letter-spacing:-.01em; margin:0;}
 a{color:var(--green); text-decoration-thickness:1px; text-underline-offset:3px;}
 :focus-visible{outline:2.5px solid var(--brass); outline-offset:2px; border-radius:4px;}
@@ -105,6 +111,8 @@ img{max-width:100%;}
   backdrop-filter:saturate(1.4) blur(10px);
   border-bottom:1px solid var(--line);
 }
+:root[data-theme="dark"] .topbar{background:color-mix(in srgb, var(--paper) 80%, transparent);}
+@media (prefers-color-scheme: dark){:root[data-theme="auto"] .topbar{background:color-mix(in srgb, var(--paper) 80%, transparent);}}
 .topbar-inner{
   max-width:var(--maxw); margin:0 auto;
   padding:12px 16px 0;
@@ -160,6 +168,8 @@ main{max-width:var(--maxw); margin:0 auto; padding:22px 16px 80px;}
   padding:20px;
   margin-bottom:18px;
 }
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .book{box-shadow:var(--shadow);}
+@media (prefers-color-scheme: dark){:root[data-theme="auto"] .card,:root[data-theme="auto"] .book{box-shadow:var(--shadow);}}
 .card h2{font-size:20px; margin-bottom:4px;}
 .card > .lede{color:var(--ink-2); font-size:14px; margin:0 0 16px;}
 .row{display:flex; gap:10px; flex-wrap:wrap;}
@@ -194,8 +204,8 @@ button{font-family:var(--sans);}
   border-radius:var(--radius-sm);
   transition:background .15s, transform .06s, opacity .15s;
 }
-:root[data-theme="dark"] .btn{color:#0F1317;}
-@media (prefers-color-scheme: dark){:root[data-theme="auto"] .btn{color:#0F1317;}}
+:root[data-theme="dark"] .btn{color:#07130F;}
+@media (prefers-color-scheme: dark){:root[data-theme="auto"] .btn{color:#07130F;}}
 .btn:hover{background:var(--green-2); border-color:var(--green-2);}
 .btn:active{transform:translateY(1px);}
 .btn:disabled{opacity:.5; cursor:not-allowed;}
@@ -295,6 +305,7 @@ button{font-family:var(--sans);}
 }
 .chip.ai{border-color:var(--green); color:var(--green); background:var(--green-soft);}
 .chip.scan{border-color:var(--brass); color:var(--brass); background:var(--brass-soft);}
+.chip.warning{border-color:var(--warn); color:var(--warn); background:var(--brass-soft);}
 
 /* stan egzemplarza */
 .cond-label{font-size:13px; font-weight:600; color:var(--ink-2); margin:16px 0 7px;}
@@ -311,8 +322,8 @@ button{font-family:var(--sans);}
 .cond-btn[aria-pressed="true"]{
   background:var(--green); border-color:var(--green); color:#FBF9F3;
 }
-:root[data-theme="dark"] .cond-btn[aria-pressed="true"]{color:#0F1317;}
-@media (prefers-color-scheme:dark){:root[data-theme="auto"] .cond-btn[aria-pressed="true"]{color:#0F1317;}}
+:root[data-theme="dark"] .cond-btn[aria-pressed="true"]{color:#07130F;}
+@media (prefers-color-scheme:dark){:root[data-theme="auto"] .cond-btn[aria-pressed="true"]{color:#07130F;}}
 .cond-btn[aria-pressed="true"] small{color:inherit; opacity:.8;}
 
 .ai-note{
@@ -424,6 +435,32 @@ table.data th, table.data td{
 }
 table.data th{font-size:11.5px; font-weight:600; color:var(--ink); letter-spacing:.02em;}
 
+
+/* ============================================================
+   WYCINEK ZE ZDJĘCIA + ALTERNATYWNE WYDANIA
+   ============================================================ */
+.book-shot{
+  width:44px; height:64px; object-fit:cover; flex:0 0 auto;
+  border-radius:4px; border:1px solid var(--line); opacity:.92;
+}
+.alts{display:grid; gap:8px; margin-top:12px;}
+.alts[hidden]{display:none;}
+.alts-head{margin:0; font-size:12.5px; color:var(--ink-2);}
+.alt{
+  display:flex; gap:10px; align-items:center; width:100%; text-align:left;
+  padding:8px 10px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  background:var(--surface-2); color:var(--ink); cursor:pointer; font:inherit;
+}
+.alt:hover{border-color:var(--line-strong);}
+.alt img{width:36px; height:52px; object-fit:cover; border-radius:3px; flex:0 0 auto;}
+.alt-noimg{
+  width:36px; height:52px; border-radius:3px; flex:0 0 auto;
+  display:grid; place-items:center; background:var(--surface); color:var(--ink-3);
+  border:1px solid var(--line);
+}
+.alt b{display:block; font-size:13.5px; line-height:1.3;}
+.alt span span, .alt > span > span{display:block; font-size:12px; color:var(--ink-2);}
+
 /* ============================================================
    TOASTY
    ============================================================ */
@@ -497,18 +534,19 @@ kbd{
   <section class="panel" id="panel-photo" role="tabpanel" aria-labelledby="tab-photo">
     <div class="card">
       <h2>Wrzuć zdjęcie</h2>
-      <p class="lede">Jedna okładka albo cała półka na jednym kadrze — aplikacja rozpozna każdy tytuł po kolei, oceni stan egzemplarza i policzy widełki.</p>
+      <p class="lede">Jedna okładka, stos albo cała półka na jednym kadrze. Aplikacja dzieli zdjęcie na pojedyncze książki, każdą wyszukuje osobno i potwierdza wynik, porównując okładkę z bazy z tą na Twoim zdjęciu.</p>
 
       <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Wybierz zdjęcie książek">
         <p class="dz-title">Przeciągnij zdjęcie tutaj</p>
-        <p class="dz-sub">albo wklej ze schowka (<kbd>Ctrl</kbd>+<kbd>V</kbd>), wybierz plik lub zrób zdjęcie aparatem</p>
+        <p class="dz-sub">albo wklej ze schowka (<kbd>Ctrl</kbd>+<kbd>V</kbd>), wybierz pliki lub zrób zdjęcie aparatem<br>
+        <small>JPG, PNG, WEBP, AVIF, GIF, BMP, TIFF, HEIC z iPhone'a i PDF — możesz wrzucić kilka zdjęć naraz</small></p>
         <div class="dz-actions">
           <button class="btn ghost small" id="pickFileBtn" type="button">Wybierz plik</button>
           <button class="btn ghost small" id="pickCamBtn" type="button">Zrób zdjęcie</button>
         </div>
       </div>
-      <input type="file" id="fileInput" accept="image/*" hidden multiple>
-      <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+      <input type="file" id="fileInput" accept="image/*,.jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,.bmp,.tif,.tiff,.heic,.heif,.pdf,application/pdf" hidden multiple>
+      <input type="file" id="camInput" accept="image/*,.heic,.heif" capture="environment" hidden multiple>
 
       <div class="preview-wrap" id="previewWrap">
         <img id="preview" alt="Podgląd wrzuconego zdjęcia">
@@ -523,7 +561,7 @@ kbd{
       <p class="status" id="photoStatus" role="status" aria-live="polite"></p>
 
       <div class="notice" id="noKeyNotice">
-        <strong>Bez klucza API też działa.</strong> Aplikacja najpierw szuka kodów kreskowych EAN na zdjęciu, a jeśli ich nie widać — czyta tytuł z okładki (OCR). Pełne rozpoznanie wielu książek naraz i ocena stanu okładki wymagają klucza do modelu wizyjnego — wklej go w <a href="#" data-goto="settings">Ustawieniach</a>.
+        <strong>Bez klucza API też działa.</strong> Aplikacja wykrywa kody ISBN, a potem czyta okładki lokalnie i grupuje tekst tak, żeby jedna okładka dawała jedną książkę, a nie kilka wyników. Model wizyjny w <a href="#" data-goto="settings">Ustawieniach</a> jest jednak wyraźnie skuteczniejszy przy zatłoczonej półce i jako jedyny ocenia stan fizyczny egzemplarza.
       </div>
     </div>
 
@@ -540,6 +578,15 @@ kbd{
         <button class="btn" id="isbnBtn" type="button">Wyceń</button>
       </div>
       <p class="hint">Możesz też wkleić kilka numerów naraz, oddzielonych przecinkiem lub enterem — policzę je jeden po drugim.</p>
+      <hr class="rule">
+      <label class="field" for="titleInput">
+        <span>Nie masz ISBN? Wyszukaj po tytule</span>
+        <div class="row">
+          <input type="search" class="grow" id="titleInput" placeholder="np. Lalka — Bolesław Prus" autocomplete="off" aria-label="Tytuł i opcjonalnie autor książki">
+          <button class="btn ghost" id="titleBtn" type="button">Znajdź książkę</button>
+        </div>
+      </label>
+      <p class="hint">Autor jest opcjonalny. Wpisz go po półpauzie, np. <span class="mono">Tytuł — Autor</span>; to zawęża wyniki i pomaga przy błędach OCR.</p>
       <div class="progress" id="isbnProgress"><i></i></div>
       <p class="status" id="isbnStatus" role="status" aria-live="polite"></p>
     </div>
@@ -612,7 +659,10 @@ kbd{
           <option value="gemini">Google Gemini — darmowy limit, najprostszy start</option>
           <option value="openai">OpenAI</option>
           <option value="anthropic">Anthropic (Claude)</option>
-          <option value="openrouter">OpenRouter</option>
+          <option value="openrouter">OpenRouter — dostęp do wielu modeli z jednego klucza</option>
+          <option value="groq">Groq — bardzo szybki, darmowy limit</option>
+          <option value="mistral">Mistral (Pixtral)</option>
+          <option value="xai">xAI (Grok Vision)</option>
         </select>
       </label>
 
@@ -632,9 +682,28 @@ kbd{
       </div>
       <p class="status" id="keyStatus" role="status" aria-live="polite"></p>
 
+      <hr class="rule">
+      <label class="field" style="display:flex; gap:9px; align-items:flex-start;">
+        <input type="checkbox" id="deepScanChk" style="width:auto; margin-top:4px;" checked>
+        <span style="margin:0;">Doczytuj każdą okładkę osobno (druga tura modelu na wycinku) — wolniej, ale nie miesza tytułów sąsiednich książek</span>
+      </label>
+      <label class="field" style="display:flex; gap:9px; align-items:flex-start;">
+        <input type="checkbox" id="coverMatchChk" style="width:auto; margin-top:4px;" checked>
+        <span style="margin:0;">Potwierdzaj wynik okładką — porównuje grafikę wydania z bazy z książką na Twoim zdjęciu</span>
+      </label>
+      <label class="field" style="display:flex; gap:9px; align-items:flex-start;">
+        <input type="checkbox" id="imgProxyChk" style="width:auto; margin-top:4px;" checked>
+        <span style="margin:0;">Pobieraj okładki przez images.weserv.nl, gdy baza blokuje odczyt grafiki (potrzebne do porównania okładek)</span>
+      </label>
+      <label class="field" style="display:flex; gap:9px; align-items:flex-start;">
+        <input type="checkbox" id="strictChk" style="width:auto; margin-top:4px;" checked>
+        <span style="margin:0;">Nie zgaduj: przy słabym dopasowaniu pokaż listę propozycji zamiast wstawiać przypadkowe wydanie</span>
+      </label>
+
       <div class="notice">
         <strong>Gdzie wziąć klucz:</strong> Gemini — aistudio.google.com/apikey, OpenAI — platform.openai.com/api-keys,
-        Anthropic — console.anthropic.com, OpenRouter — openrouter.ai/keys.
+        Anthropic — console.anthropic.com, OpenRouter — openrouter.ai/keys, Groq — console.groq.com/keys,
+        Mistral — console.mistral.ai, xAI — console.x.ai.
         Klucz wklejony na stronie publicznej może zostać odczytany przez kogoś, kto ma dostęp do tego urządzenia, więc ustaw sobie limit wydatków u dostawcy.
       </div>
     </div>
@@ -702,12 +771,12 @@ kbd{
 (function(){
 'use strict';
 
-const VERSION = '2.0';
+const VERSION = '3.0';
 const LS = {
   hist:'kartoteka.history.v2',
   set:'kartoteka.settings.v2',
   key:'kartoteka.apikey.v2',
-  cache:'kartoteka.cache.v2'
+  cache:'kartoteka.cache.v3'
 };
 
 /* ---------- drobne narzędzia ---------- */
@@ -761,21 +830,48 @@ const DEFAULT_SETTINGS = {
   defCond:'dobry',
   autoSave:true,
   sound:true,
-  theme:'auto'
+  theme:'auto',
+  deepScan:true,     // druga tura modelu na wyciętej okładce
+  coverMatch:true,   // porównanie okładki ze zdjęcia z okładką z bazy
+  imgProxy:true,     // proxy obrazów (CORS) do porównania okładek
+  strict:true        // odrzucaj słabe dopasowania zamiast zgadywać
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readLS(LS.set, {}));
 function saveSettings(){ writeLS(LS.set, settings); }
 
-const DEFAULT_MODELS = {
-  gemini:'gemini-2.0-flash',
-  openai:'gpt-4o-mini',
-  anthropic:'claude-sonnet-4-5-20250929',
-  openrouter:'google/gemini-2.0-flash-001'
+/* Dostawcy modeli wizyjnych. Wszyscy poza Gemini i Anthropic mówią
+   protokołem zgodnym z OpenAI, więc obsługuje ich jedna gałąź kodu. */
+const PROVIDERS = {
+  gemini:     {label:'Google Gemini',   kind:'gemini',    model:'gemini-2.5-flash'},
+  openai:     {label:'OpenAI',          kind:'openai',    model:'gpt-4o-mini',            url:'https://api.openai.com/v1/chat/completions'},
+  anthropic:  {label:'Anthropic Claude',kind:'anthropic', model:'claude-sonnet-4-5-20250929'},
+  openrouter: {label:'OpenRouter',      kind:'openai',    model:'google/gemini-2.5-flash', url:'https://openrouter.ai/api/v1/chat/completions'},
+  groq:       {label:'Groq',            kind:'openai',    model:'meta-llama/llama-4-scout-17b-16e-instruct', url:'https://api.groq.com/openai/v1/chat/completions'},
+  mistral:    {label:'Mistral',         kind:'openai',    model:'pixtral-12b-2409',        url:'https://api.mistral.ai/v1/chat/completions'},
+  xai:        {label:'xAI Grok',        kind:'openai',    model:'grok-2-vision-1212',      url:'https://api.x.ai/v1/chat/completions'}
 };
+const DEFAULT_MODELS = {};
+Object.keys(PROVIDERS).forEach(k => DEFAULT_MODELS[k] = PROVIDERS[k].model);
+
+function providerCfg(){ return PROVIDERS[settings.provider] || PROVIDERS.gemini; }
 function getApiKey(){ try{ return localStorage.getItem(LS.key) || ''; }catch(e){ return ''; } }
 function setApiKey(v){ try{ v ? localStorage.setItem(LS.key, v) : localStorage.removeItem(LS.key); }catch(e){} }
-function activeModel(){ return settings.model || DEFAULT_MODELS[settings.provider]; }
+function activeModel(){ return settings.model || providerCfg().model; }
 function hasVision(){ return !!getApiKey(); }
+
+/* ---------- ładowanie bibliotek z CDN na żądanie ---------- */
+const scriptCache = {};
+function loadScript(url){
+  if(scriptCache[url]) return scriptCache[url];
+  scriptCache[url] = new Promise((res, rej)=>{
+    const s = document.createElement('script');
+    s.src = url; s.async = true;
+    s.onload = ()=>res(true);
+    s.onerror = ()=>rej(new Error('Nie udało się pobrać ' + url));
+    document.head.appendChild(s);
+  });
+  return scriptCache[url];
+}
 
 /* ---------- motyw ---------- */
 function applyTheme(){
@@ -908,20 +1004,201 @@ async function fetchJson(url, opts, timeoutMs){
   } finally { clearTimeout(t); }
 }
 
-function pickCover(isbn13, gbInfo, olData){
-  const gb = gbInfo && gbInfo.imageLinks;
-  if(gb){
-    const u = gb.extraLarge || gb.large || gb.medium || gb.thumbnail || gb.smallThumbnail;
-    if(u) return u.replace(/^http:/,'https:').replace(/&edge=curl/,'');
+
+/* ============================================================
+   DOPASOWANIE TEKSTU
+   OCR i modele wizyjne mylą litery, gubią ogonki i doklejają nazwę serii.
+   Nie polegamy więc na dokładnej frazie — porównujemy słowa, tolerujemy
+   literówki, a o ostatecznym wyborze wydania decyduje podobieństwo okładki.
+   ============================================================ */
+const SEARCH_STOP_WORDS = new Set(['a','i','w','z','do','na','od','oraz','the','and','of','for','dla','po','przez']);
+
+/* Słowa, które same z siebie nie są tytułem książki — na okładce
+   podręcznika jest ich pełno i to one psuły wcześniej wyszukiwanie. */
+const GENERIC_TOKENS = new Set([
+  'podrecznik','podreczniki','cwiczenia','zeszyt','zbior','zadan','atlas','repetytorium',
+  'zakres','podstawowy','rozszerzony','poziom','klasa','klasy','czesc','czesci','tom','tomy',
+  'liceum','technikum','szkola','szkoly','podstawowej','gimnazjum','edukacja','nauka',
+  'wydanie','nowe','nowa','wyd','egzamin','matura','maturalne','testy','wzory','sprawdziany',
+  'ksiazka','ksiazki','ilustrowana','kolor','seria','biblioteka','wydawnictwo','wydawnictwa',
+  'reforma','program','nauczania','material','materialy','dla','uczniow','ucznia','nauczyciela'
+]);
+
+function foldText(value){
+  return String(value || '')
+    .toLocaleLowerCase('pl-PL')
+    .replace(/ł/g,'l')                       // ł nie rozkłada się przez NFD
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+}
+function searchTokens(value){
+  const all = foldText(value).split(' ').filter(Boolean);
+  const useful = all.filter(w=>w.length > 1 && !SEARCH_STOP_WORDS.has(w));
+  return Array.from(new Set(useful.length ? useful : all));
+}
+/* czy fraza składa się wyłącznie z ogólników typu "podręcznik do liceum" */
+function isGenericText(value){
+  const t = searchTokens(value).filter(w=>w.length>1 && !/^\d+$/.test(w));
+  if(!t.length) return true;
+  return t.every(w=>GENERIC_TOKENS.has(w));
+}
+function distinctTokens(value){
+  return searchTokens(value).filter(w=>!GENERIC_TOKENS.has(w) && w.length>2);
+}
+/* to samo, ale zwraca słowa w oryginalnej pisowni — do zapytań do baz */
+function distinctWords(value){
+  const seen = new Set();
+  return String(value || '').split(/\s+/)
+    .map(w=>w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,''))
+    .filter(w=>{
+      const f = foldText(w);
+      if(!f || f.length < 3 || GENERIC_TOKENS.has(f) || SEARCH_STOP_WORDS.has(f) || seen.has(f)) return false;
+      seen.add(f); return true;
+    });
+}
+function editDistanceAtMost(a, b, max){
+  if(Math.abs(a.length-b.length) > max) return max + 1;
+  let prev = Array.from({length:b.length+1}, (_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    const row = [i]; let best = row[0];
+    for(let j=1;j<=b.length;j++){
+      const v = Math.min(prev[j]+1, row[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      row.push(v); if(v<best) best=v;
+    }
+    if(best > max) return max + 1;
+    prev = row;
   }
-  if(olData && olData.cover && (olData.cover.large || olData.cover.medium)) return olData.cover.large || olData.cover.medium;
-  if(isbn13) return 'https://covers.openlibrary.org/b/isbn/' + isbn13 + '-L.jpg?default=false';
-  return null;
+  return prev[b.length];
+}
+function sameSearchToken(a, b){
+  if(a === b) return true;
+  if(a.length < 5 || b.length < 5) return false;
+  const max = Math.max(a.length,b.length) >= 9 ? 2 : 1;
+  return editDistanceAtMost(a,b,max) <= max;
+}
+function tokenOverlap(source, query){
+  const a = searchTokens(source), b = searchTokens(query);
+  if(!a.length || !b.length) return 0;
+  const hits = a.filter(x=>b.some(y=>sameSearchToken(x,y))).length;
+  return Math.max(hits/a.length, hits/b.length);
+}
+/* Ile znaczących (nie-ogólnikowych) słów zapytania faktycznie wystąpiło
+   w tytule znaleziska. To ta miara blokuje wynik "Matematyka 1" dla
+   zapytania "podręcznik do liceum i technikum". */
+function distinctCoverage(source, query){
+  const q = distinctTokens(query);
+  if(!q.length) return 0;
+  const s = searchTokens(source);
+  const hits = q.filter(x=>s.some(y=>sameSearchToken(x,y))).length;
+  return hits / q.length;
+}
+function quotedTerm(value){ return '"' + String(value || '').replace(/["\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,100) + '"'; }
+
+function buildBookQueries(title, author, extra){
+  const t = String(title || '').replace(/\s+/g,' ').trim().slice(0,120);
+  const a = String(author || '').replace(/\s+/g,' ').trim().slice(0,80);
+  const x = String(extra || '').replace(/\s+/g,' ').trim().slice(0,160);
+  const list = [];
+  if(t && a) list.push('intitle:' + quotedTerm(t) + ' inauthor:' + quotedTerm(a));
+  if(t){
+    list.push('intitle:' + quotedTerm(t));
+    list.push(t + (a ? ' ' + a : ''));
+    const words = distinctWords(t);
+    if(words.length > 3) list.push(words.slice(0,4).join(' ') + (a ? ' ' + a : ''));
+  }
+  if(x && foldText(x) !== foldText(t)){
+    const words = distinctWords(x).slice(0,6);
+    if(words.length) list.push(words.join(' '));
+  }
+  if(!t && a) list.push('inauthor:' + quotedTerm(a));
+  return Array.from(new Set(list.filter(q=>q.replace(/[^\p{L}\p{N}]/gu,'').length > 2))).slice(0,4);
 }
 
-/* Google Books po ISBN lub po tytule/autorze */
-async function googleBooks(query){
-  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=5&country=PL&q=' + encodeURIComponent(query);
+/* ============================================================
+   PODPIS WIZUALNY OKŁADKI
+   16x16 szarości + siatka kolorów. Porównanie działa na wyciętym
+   fragmencie zdjęcia i na miniaturze okładki z bazy — dzięki temu
+   wybieramy wydanie, które naprawdę wygląda jak książka na zdjęciu.
+   ============================================================ */
+const SIG_N = 16;
+function signatureFromSource(src, sx, sy, sw, sh){
+  try{
+    const c = document.createElement('canvas');
+    c.width = SIG_N; c.height = SIG_N;
+    const ctx = c.getContext('2d', {willReadFrequently:true});
+    ctx.drawImage(src, sx, sy, sw, sh, 0, 0, SIG_N, SIG_N);
+    const d = ctx.getImageData(0,0,SIG_N,SIG_N).data;
+    const gray = new Float64Array(SIG_N*SIG_N);
+    const rgb = new Float64Array(3*16);
+    for(let i=0;i<SIG_N*SIG_N;i++){
+      const r=d[i*4], g=d[i*4+1], b=d[i*4+2];
+      gray[i] = r*.2126 + g*.7152 + b*.0722;
+      const cell = Math.floor(Math.floor(i/SIG_N)/4)*4 + Math.floor((i%SIG_N)/4);
+      rgb[cell*3] += r; rgb[cell*3+1] += g; rgb[cell*3+2] += b;
+    }
+    for(let i=0;i<rgb.length;i++) rgb[i] /= 16*255;
+    const bits = [];
+    for(let y=0;y<SIG_N;y++)
+      for(let x=0;x<SIG_N-1;x++)
+        bits.push(gray[y*SIG_N+x] > gray[y*SIG_N+x+1] ? 1 : 0);
+    return {gray, rgb, bits};
+  }catch(e){ return null; }   // np. płótno "zatrute" przez obraz bez CORS
+}
+function correlation(a, b){
+  let ma=0, mb=0;
+  for(let i=0;i<a.length;i++){ ma+=a[i]; mb+=b[i]; }
+  ma/=a.length; mb/=b.length;
+  let num=0, da=0, db=0;
+  for(let i=0;i<a.length;i++){
+    const x=a[i]-ma, y=b[i]-mb;
+    num+=x*y; da+=x*x; db+=y*y;
+  }
+  if(da<=0 || db<=0) return 0;
+  return num/Math.sqrt(da*db);
+}
+function sigSimilarity(a, b){
+  if(!a || !b) return null;
+  let same = 0;
+  for(let i=0;i<a.bits.length;i++) if(a.bits[i]===b.bits[i]) same++;
+  const hash = (same/a.bits.length - .5) * 2;          // -1..1
+  const corr = correlation(a.gray, b.gray);            // -1..1
+  let diff = 0;
+  for(let i=0;i<a.rgb.length;i++) diff += Math.abs(a.rgb[i]-b.rgb[i]);
+  const color = Math.max(0, 1 - (diff/a.rgb.length) * 2.4);
+  const s = Math.max(0,corr)*.45 + Math.max(0,hash)*.3 + color*.25;
+  return Math.max(0, Math.min(1, s));
+}
+function proxiedImage(url){
+  const bare = String(url).replace(/^https?:\/\//,'');
+  return 'https://images.weserv.nl/?w=320&url=' + encodeURIComponent(bare);
+}
+const coverSigCache = new Map();
+async function remoteCoverSignature(url){
+  if(!url) return null;
+  if(coverSigCache.has(url)) return coverSigCache.get(url);
+  const tries = [String(url).replace(/^http:/,'https:')];
+  if(settings.imgProxy) tries.push(proxiedImage(url));
+  let sig = null;
+  for(const u of tries){
+    try{
+      const img = await loadImage(u);
+      if(!img.naturalWidth) continue;
+      // okładki z Google Books mają białe marginesy — tniemy 4% z każdej strony
+      const mx = img.naturalWidth*.04, my = img.naturalHeight*.04;
+      sig = signatureFromSource(img, mx, my, img.naturalWidth-2*mx, img.naturalHeight-2*my);
+      if(sig) break;
+    }catch(e){}
+  }
+  coverSigCache.set(url, sig);
+  return sig;
+}
+
+/* ============================================================
+   ŹRÓDŁA DANYCH: Google Books + Open Library
+   ============================================================ */
+async function googleBooks(query, maxResults){
+  const limit = Math.max(1, Math.min(40, Number(maxResults) || 20));
+  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=' + limit + '&country=PL&printType=books&q=' + encodeURIComponent(query);
   const d = await fetchJson(url);
   return (d.items && d.items.length) ? d.items : [];
 }
@@ -931,95 +1208,11 @@ async function openLibraryByIsbn(isbn){
 }
 async function openLibrarySearch(title, author){
   const q = new URLSearchParams();
-  if(title) q.set('title', title);
+  if(title) q.set('title', title); else return [];
   if(author) q.set('author', author);
-  q.set('limit','5');
+  q.set('limit','20');
   const d = await fetchJson('https://openlibrary.org/search.json?' + q.toString());
   return (d.docs && d.docs.length) ? d.docs : [];
-}
-
-/* Główna funkcja: zbiera metadane z obu źródeł */
-async function resolveBook({isbn, title, author}){
-  const cacheKey = isbn ? ('i:'+isbn) : ('q:'+(title||'')+'|'+(author||'')).toLowerCase();
-  const cached = cacheGet(cacheKey);
-  if(cached) return cached;
-
-  let gbItem = null, ol = null, finalIsbn = isbn || null;
-
-  if(isbn){
-    const [gbRes, olRes] = await Promise.allSettled([
-      googleBooks('isbn:'+isbn),
-      openLibraryByIsbn(isbn)
-    ]);
-    if(gbRes.status==='fulfilled' && gbRes.value.length) gbItem = gbRes.value[0];
-    if(olRes.status==='fulfilled') ol = olRes.value;
-  }
-
-  if(!gbItem && (title || author)){
-    const parts = [];
-    if(title)  parts.push('intitle:'+title);
-    if(author) parts.push('inauthor:'+author);
-    let items = [];
-    try{ items = await googleBooks(parts.join('+')); }catch(e){}
-    if(!items.length && title){ try{ items = await googleBooks(title + ' ' + (author||'')); }catch(e){} }
-    if(items.length){
-      // wolimy wydanie z ISBN i z ceną
-      items.sort((a,b)=> scoreVolume(b) - scoreVolume(a));
-      gbItem = items[0];
-    }
-  }
-
-  if(!gbItem && !ol && (title||author)){
-    try{
-      const docs = await openLibrarySearch(title, author);
-      if(docs.length){
-        const d = docs[0];
-        ol = {
-          title:d.title,
-          authors:(d.author_name||[]).map(n=>({name:n})),
-          publishers:(d.publisher||[]).slice(0,1).map(n=>({name:n})),
-          publish_date:d.first_publish_year ? String(d.first_publish_year) : null,
-          number_of_pages:d.number_of_pages_median || null,
-          cover:d.cover_i ? {large:'https://covers.openlibrary.org/b/id/'+d.cover_i+'-L.jpg'} : null
-        };
-        if(d.isbn && d.isbn.length) finalIsbn = normalizeIsbn(d.isbn.find(x=>x.length===13) || d.isbn[0]) || finalIsbn;
-      }
-    }catch(e){}
-  }
-
-  if(!gbItem && !ol) return null;
-
-  const vi = gbItem ? (gbItem.volumeInfo||{}) : {};
-  const si = gbItem ? (gbItem.saleInfo||{}) : {};
-
-  if(!finalIsbn && vi.industryIdentifiers){
-    const i13 = vi.industryIdentifiers.find(x=>x.type==='ISBN_13');
-    const i10 = vi.industryIdentifiers.find(x=>x.type==='ISBN_10');
-    finalIsbn = i13 ? i13.identifier : (i10 ? normalizeIsbn(i10.identifier) : null);
-  }
-
-  const meta = {
-    isbn: finalIsbn,
-    title: (vi.title ? (vi.title + (vi.subtitle ? '. '+vi.subtitle : '')) : null) || (ol && ol.title) || title || 'Tytuł nieznany',
-    authors: (vi.authors && vi.authors.join(', '))
-          || (ol && ol.authors && ol.authors.map(a=>a.name).join(', '))
-          || author || 'Autor nieznany',
-    publisher: vi.publisher || (ol && ol.publishers && ol.publishers[0] && ol.publishers[0].name) || null,
-    year: parseYear(vi.publishedDate || (ol && ol.publish_date)),
-    pages: vi.pageCount || (ol && ol.number_of_pages) || null,
-    language: vi.language || null,
-    categories: vi.categories || null,
-    ratingsCount: vi.ratingsCount || 0,
-    averageRating: vi.averageRating || null,
-    cover: pickCover(finalIsbn, vi, ol),
-    listPrice: (si.listPrice && si.listPrice.amount) ? {amount:si.listPrice.amount, currency:si.listPrice.currencyCode} : null,
-    retailPrice: (si.retailPrice && si.retailPrice.amount) ? {amount:si.retailPrice.amount, currency:si.retailPrice.currencyCode} : null,
-    infoLink: vi.infoLink || null,
-    source: gbItem ? 'Google Books' : 'Open Library'
-  };
-
-  cacheSet(cacheKey, meta);
-  return meta;
 }
 
 function scoreVolume(item){
@@ -1036,6 +1229,202 @@ function parseYear(v){
   if(!v) return null;
   const m = String(v).match(/(1[5-9]\d{2}|20\d{2})/);
   return m ? Number(m[1]) : null;
+}
+function pickCover(isbn13, gbInfo, olData){
+  const gb = gbInfo && gbInfo.imageLinks;
+  if(gb){
+    const u = gb.extraLarge || gb.large || gb.medium || gb.thumbnail || gb.smallThumbnail;
+    if(u) return u.replace(/^http:/,'https:').replace(/&edge=curl/,'');
+  }
+  if(olData && olData.cover && (olData.cover.large || olData.cover.medium)) return olData.cover.large || olData.cover.medium;
+  if(isbn13) return 'https://covers.openlibrary.org/b/isbn/' + isbn13 + '-L.jpg?default=false';
+  return null;
+}
+
+function metaFromGoogle(item, ol){
+  const vi = item.volumeInfo || {}, si = item.saleInfo || {};
+  let isbn = null;
+  if(vi.industryIdentifiers){
+    const i13 = vi.industryIdentifiers.find(x=>x.type==='ISBN_13');
+    const i10 = vi.industryIdentifiers.find(x=>x.type==='ISBN_10');
+    isbn = i13 ? i13.identifier : (i10 ? normalizeIsbn(i10.identifier) : null);
+  }
+  return {
+    isbn,
+    title: vi.title ? (vi.title + (vi.subtitle ? '. ' + vi.subtitle : '')) : ((ol && ol.title) || 'Tytuł nieznany'),
+    authors: (vi.authors && vi.authors.join(', ')) || (ol && ol.authors && ol.authors.map(a=>a.name).join(', ')) || 'Autor nieznany',
+    publisher: vi.publisher || (ol && ol.publishers && ol.publishers[0] && ol.publishers[0].name) || null,
+    year: parseYear(vi.publishedDate || (ol && ol.publish_date)),
+    pages: vi.pageCount || (ol && ol.number_of_pages) || null,
+    language: vi.language || null,
+    categories: vi.categories || null,
+    ratingsCount: vi.ratingsCount || 0,
+    averageRating: vi.averageRating || null,
+    cover: pickCover(isbn, vi, ol),
+    listPrice: (si.listPrice && si.listPrice.amount) ? {amount:si.listPrice.amount, currency:si.listPrice.currencyCode} : null,
+    retailPrice: (si.retailPrice && si.retailPrice.amount) ? {amount:si.retailPrice.amount, currency:si.retailPrice.currencyCode} : null,
+    infoLink: vi.infoLink || null,
+    source: 'Google Books',
+    matchScore: 0
+  };
+}
+function metaFromOpenLibrary(doc){
+  const isbn = (doc.isbn && doc.isbn.length) ? (normalizeIsbn(doc.isbn.find(x=>x.length===13) || doc.isbn[0]) || null) : null;
+  return {
+    isbn,
+    title: doc.title || 'Tytuł nieznany',
+    authors: (doc.author_name || []).join(', ') || 'Autor nieznany',
+    publisher: (doc.publisher || [])[0] || null,
+    year: doc.first_publish_year || null,
+    pages: doc.number_of_pages_median || null,
+    language: (doc.language || [])[0] === 'pol' ? 'pl' : null,
+    categories: null,
+    ratingsCount: 0,
+    averageRating: null,
+    cover: doc.cover_i ? ('https://covers.openlibrary.org/b/id/' + doc.cover_i + '-L.jpg') : (isbn ? 'https://covers.openlibrary.org/b/isbn/'+isbn+'-L.jpg?default=false' : null),
+    listPrice: null,
+    retailPrice: null,
+    infoLink: doc.key ? ('https://openlibrary.org' + doc.key) : null,
+    source: 'Open Library',
+    matchScore: 0
+  };
+}
+function metaFromOlData(ol, isbn){
+  return {
+    isbn: isbn || null,
+    title: ol.title || 'Tytuł nieznany',
+    authors: (ol.authors || []).map(a=>a.name).join(', ') || 'Autor nieznany',
+    publisher: (ol.publishers || [])[0] ? ol.publishers[0].name : null,
+    year: parseYear(ol.publish_date),
+    pages: ol.number_of_pages || null,
+    language: null,
+    categories: (ol.subjects || []).slice(0,4).map(s=>s.name || s),
+    ratingsCount: 0,
+    averageRating: null,
+    cover: pickCover(isbn, null, ol),
+    listPrice: null,
+    retailPrice: null,
+    infoLink: ol.url || null,
+    source: 'Open Library',
+    matchScore: 0
+  };
+}
+
+function textScoreFor(meta, q){
+  const query = [q.title, q.text].filter(Boolean).join(' ');
+  const titleOv  = tokenOverlap(meta.title, q.title || query);
+  const cover    = distinctCoverage(meta.title + ' ' + meta.authors, query);
+  const authorOv = q.author ? tokenOverlap(meta.authors, q.author) : 0;
+  let s = titleOv*.42 + cover*.38 + authorOv*.2;
+  if(!q.author) s = titleOv*.5 + cover*.5;
+  if(meta.language === 'pl') s += .04;
+  if(meta.isbn) s += .03;
+  if(meta.cover) s += .02;
+  return Math.max(0, Math.min(1, s));
+}
+
+/* Zbiera kandydatów z obu baz i wstępnie porządkuje po tekście. */
+async function findEditions(q){
+  const out = [];
+  const seen = new Map();
+  const push = (meta, score)=>{
+    if(!meta || !meta.title) return;
+    const key = meta.isbn ? ('i:'+meta.isbn) : ('t:'+foldText(meta.title)+'|'+foldText(meta.authors));
+    const prev = seen.get(key);
+    if(prev){ if(score > prev.textScore) prev.textScore = score; return; }
+    const rec = {meta, textScore:score, cover:null, score:score};
+    seen.set(key, rec); out.push(rec);
+  };
+
+  if(q.isbn){
+    const [gbRes, olRes] = await Promise.allSettled([
+      googleBooks('isbn:' + q.isbn, 5),
+      openLibraryByIsbn(q.isbn)
+    ]);
+    const ol = olRes.status === 'fulfilled' ? olRes.value : null;
+    if(gbRes.status === 'fulfilled' && gbRes.value.length){
+      const m = metaFromGoogle(gbRes.value[0], ol);
+      if(!m.isbn) m.isbn = q.isbn;
+      push(m, 1);
+    } else if(ol){
+      push(metaFromOlData(ol, q.isbn), 1);
+    }
+    if(out.length) return out;      // ISBN jest pewny, nie ma co dalej szukać
+  }
+
+  const queries = buildBookQueries(q.title, q.author, q.text);
+  if(!queries.length) return out;
+
+  const [googleRuns, libraryRun] = await Promise.all([
+    Promise.allSettled(queries.map(s=>googleBooks(s, 20))),
+    openLibrarySearch(q.title || (distinctWords(q.text||'').slice(0,5).join(' ')), q.author).catch(()=>[])
+  ]);
+  googleRuns.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).forEach(item=>{
+    const meta = metaFromGoogle(item, null);
+    push(meta, textScoreFor(meta, q) + Math.min(.06, scoreVolume(item)*.005));
+  });
+  (libraryRun || []).forEach(doc=>{
+    const meta = metaFromOpenLibrary(doc);
+    push(meta, textScoreFor(meta, q));
+  });
+
+  out.sort((a,b)=>b.textScore-a.textScore);
+  return out;
+}
+
+const MIN_MATCH = 0.42;      // poniżej tego wolimy powiedzieć "nie wiem"
+const SURE_MATCH = 0.68;
+
+/* Główna funkcja rozpoznania: tekst + weryfikacja okładką. */
+async function resolveSmart(cand){
+  const q = {
+    isbn: cand.isbn || null,
+    title: cand.title || '',
+    author: cand.author || '',
+    text: cand.text || cand.title || ''
+  };
+  const cacheKey = q.isbn ? ('i:'+q.isbn) : null;
+  if(cacheKey){
+    const hit = cacheGet(cacheKey);
+    if(hit) return {best:{meta:hit, score:1, textScore:1, cover:null}, alts:[]};
+  }
+
+  let list = [];
+  try{ list = await findEditions(q); }catch(e){ throw e; }
+  if(!list.length) return null;
+
+  list = list.slice(0, 10);
+
+  if(q.isbn){
+    list.forEach(x=>{ x.score = x.meta.isbn === q.isbn ? 1 : x.textScore; });
+  }
+  else if(settings.coverMatch && cand.sig){
+    const head = list.slice(0, 6);
+    await Promise.all(head.map(async x=>{
+      try{
+        const sig = await remoteCoverSignature(x.meta.cover);
+        x.cover = sigSimilarity(cand.sig, sig);
+      }catch(e){ x.cover = null; }
+    }));
+    head.forEach(x=>{
+      x.score = (x.cover == null)
+        ? x.textScore * .92
+        : Math.min(1, x.textScore*.45 + x.cover*.55 + (x.cover > .62 ? .08 : 0));
+    });
+  }
+
+  list.sort((a,b)=>b.score-a.score);
+  const best = list[0];
+  best.meta.matchScore = best.score;
+  best.meta.coverMatch = best.cover;
+  if(cacheKey) cacheSet(cacheKey, best.meta);
+  return {best, alts:list.slice(1, 6).filter(x=>x.score > .18)};
+}
+
+/* zgodność wstecz — używane przez starsze ścieżki */
+async function resolveBook(q){
+  const r = await resolveSmart(q);
+  return r ? r.best.meta : null;
 }
 
 /* ============================================================
@@ -1165,29 +1554,53 @@ function cropToDataUrl(img, box, pad){
    KODY KRESKOWE NA ZDJĘCIU
    ============================================================ */
 async function detectBarcodes(img){
-  const found = new Set();
+  const found = new Map();                 // isbn -> box [x0,y0,x1,y1] w ułamkach lub null
+  const W = img.naturalWidth, H = img.naturalHeight;
 
   // 1) natywne API przeglądarki (Chrome, Edge, Android)
   if('BarcodeDetector' in window){
     try{
       const supported = await window.BarcodeDetector.getSupportedFormats();
-      const formats = ['ean_13','ean_8','upc_a','upc_e','code_128'].filter(f=>supported.includes(f));
+      const formats = ['ean_13','ean_8','upc_a','upc_e','code_128','codabar','itf'].filter(f=>supported.includes(f));
       if(formats.length){
         const det = new window.BarcodeDetector({formats});
-        const variants = [img];
-        // druga próba na powiększonym obrazie, drobne kody bywają nieczytelne
+        const variants = [{src:img, sx:0, sy:0, scale:1}];
+        // Pełny kadr oraz zachodzące na siebie kafelki: na zdjęciu półki
+        // małe EAN-y bywają zbyt drobne dla detektora całego obrazu.
         try{
           const c = document.createElement('canvas');
-          c.width = img.naturalWidth*1.6; c.height = img.naturalHeight*1.6;
-          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-          variants.push(c);
+          const scale = Math.min(2, 3000 / Math.max(W, H));
+          c.width = Math.max(1, Math.round(W*scale));
+          c.height = Math.max(1, Math.round(H*scale));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          variants.push({src:c, sx:0, sy:0, scale});
+          const tileW = Math.round(c.width*.55), tileH = Math.round(c.height*.55);
+          const positions = [
+            [0,0], [c.width-tileW,0], [0,c.height-tileH], [c.width-tileW,c.height-tileH],
+            [Math.round((c.width-tileW)/2), Math.round((c.height-tileH)/2)]
+          ];
+          positions.forEach(([x,y])=>{
+            const tile = document.createElement('canvas');
+            tile.width = tileW; tile.height = tileH;
+            tile.getContext('2d').drawImage(c, x, y, tileW, tileH, 0, 0, tileW, tileH);
+            variants.push({src:tile, sx:x, sy:y, scale});
+          });
         }catch(e){}
         for(const v of variants){
           try{
-            const codes = await det.detect(v);
-            codes.forEach(c=>{ const n = normalizeIsbn(c.rawValue); if(n) found.add(n); });
+            const codes = await det.detect(v.src);
+            codes.forEach(code=>{
+              const n = normalizeIsbn(code.rawValue);
+              if(!n) return;
+              let box = null;
+              const bb = code.boundingBox;
+              if(bb && v.scale){
+                const x0 = (bb.x + v.sx)/v.scale, y0 = (bb.y + v.sy)/v.scale;
+                box = [x0/W, y0/H, (x0 + bb.width/v.scale)/W, (y0 + bb.height/v.scale)/H];
+              }
+              if(!found.has(n) || (box && !found.get(n))) found.set(n, box);
+            });
           }catch(e){}
-          if(found.size) break;
         }
       }
     }catch(e){}
@@ -1204,29 +1617,46 @@ async function detectBarcodes(img){
       try{
         const text = await h.scanFile(lastFile, false);
         const n = normalizeIsbn(text);
-        if(n) found.add(n);
+        if(n) found.set(n, null);
       }catch(e){}
       try{ await h.clear(); }catch(e){}
       div.remove();
     }catch(e){}
   }
-  return Array.from(found);
+  return Array.from(found, ([isbn, box])=>({isbn, box}));
+}
+
+/* czy środek kodu kreskowego leży w prostokącie książki */
+function boxContains(box, inner){
+  if(!box || !inner) return false;
+  const cx = (inner[0]+inner[2])/2, cy = (inner[1]+inner[3])/2;
+  return cx >= box[0]-.02 && cx <= box[2]+.02 && cy >= box[1]-.02 && cy <= box[3]+.02;
 }
 
 /* ============================================================
    MODEL WIZYJNY — rozpoznanie tytułów i ocena stanu
    ============================================================ */
-const VISION_PROMPT = `Jesteś rzeczoznawcą książek używanych. Na zdjęciu znajduje się jedna książka albo kilka książek (stos, półka, rozłożone na stole).
+const VISION_PROMPT = `Jesteś rzeczoznawcą książek używanych. Na zdjęciu jest jedna książka albo kilka książek (stos, półka, rozłożone na stole).
 
-Zadanie:
-1. Wypisz KAŻDĄ książkę widoczną na zdjęciu, od lewej do prawej / od góry do dołu.
-2. Dla każdej odczytaj tytuł i autora z okładki lub grzbietu. Jeśli widać numer ISBN lub kod kreskowy — podaj cyfry.
-3. Oceń stan fizyczny każdego egzemplarza na podstawie tego, co widać: zagięcia, przetarcia grzbietu i rogów, zarysowania, zabrudzenia, pożółkłe kartki, naklejki, oderwana obwoluta.
+ZASADY — przeczytaj uważnie:
+1. Jedna pozycja w odpowiedzi = jedna fizyczna książka. NIGDY nie dziel jednej okładki na kilka pozycji. Podtytuł, nazwa serii, poziom nauczania ("zakres podstawowy i rozszerzony"), numer części, nazwa działu i nazwa wydawnictwa należą do TEJ SAMEJ książki co tytuł główny.
+2. "title" to główny tytuł z okładki, dokładnie tak jak napisany, bez nazwy wydawnictwa i bez dopisków o poziomie nauczania.
+3. Wszystko pozostałe z okładki wpisz w osobne pola: "subtitle", "series", "volume", "publisher", "year", "level".
+4. Jeśli widać ISBN albo kod kreskowy — przepisz same cyfry.
+5. "box" to ciasny prostokąt obejmujący CAŁĄ okładkę lub grzbiet tej książki: cztery liczby 0-1 względem szerokości i wysokości zdjęcia.
+6. Oceń stan fizyczny po tym, co widać: zagięcia, przetarcia grzbietu i rogów, zarysowania, zabrudzenia, pożółkłe kartki, naklejki, oderwana obwoluta.
+7. Jeśli czegoś nie widać — wpisz null. Nie zgaduj i nie uzupełniaj z pamięci.
 
 Odpowiedz WYŁĄCZNIE obiektem JSON, bez komentarza i bez znaczników markdown:
 {"books":[{
-  "title":"dokładny tytuł z okładki",
+  "title":"główny tytuł z okładki",
+  "subtitle":"podtytuł lub null",
+  "series":"seria lub null",
+  "volume":"numer części/tomu lub null",
+  "level":"np. zakres podstawowy i rozszerzony, klasa 4 — lub null",
   "author":"autor lub null",
+  "publisher":"wydawnictwo lub null",
+  "year":"rok lub null",
   "isbn":"same cyfry lub null",
   "cover_type":"twarda|miekka|null",
   "condition":"nowa|bdb|dobry|dost|zly",
@@ -1234,55 +1664,44 @@ Odpowiedz WYŁĄCZNIE obiektem JSON, bez komentarza i bez znaczników markdown:
   "confidence":0.0-1.0,
   "box":[x0,y0,x1,y1]
 }]}
-
-"box" to prostokąt obejmujący książkę, cztery liczby od 0 do 1 względem szerokości i wysokości zdjęcia.
-Skala stanu: nowa = fabrycznie nowa, bez śladów; bdb = praktycznie nieużywana; dobry = czytana, drobne przetarcia; dost = wyraźnie zużyta, zagięcia, przybrudzenia; zly = zniszczona, rozpadająca się, poplamiona.
 Jeśli nie widać żadnej książki, zwróć {"books":[]}.`;
+
+/* Druga tura: model dostaje sam wycinek jednej okładki i ma jedno zadanie —
+   przepisać z niej tekst możliwie wiernie. To najmocniej poprawia trafność. */
+const VISION_PROMPT_ONE = `Na zdjęciu jest okładka albo grzbiet jednej książki. Przepisz z niej dane dokładnie tak, jak są wydrukowane — litera po literze, z polskimi znakami. Nie korzystaj z wiedzy o książkach, nie poprawiaj i nie uzupełniaj tytułu z pamięci.
+
+Odpowiedz WYŁĄCZNIE obiektem JSON:
+{"books":[{"title":"...","subtitle":null,"series":null,"volume":null,"level":null,"author":null,"publisher":null,"year":null,"isbn":null,"condition":"nowa|bdb|dobry|dost|zly","condition_notes":"...","confidence":0.0-1.0}]}`;
 
 function dataUrlParts(dataUrl){
   const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
   return m ? {mime:m[1], data:m[2]} : {mime:'image/jpeg', data:dataUrl.split(',')[1]||''};
 }
 
-async function callVision(dataUrl){
+async function callVisionText(dataUrl, prompt){
   const key = getApiKey();
   if(!key) throw new Error('Brak klucza API');
   const {mime, data} = dataUrlParts(dataUrl);
   const model = activeModel();
-  const provider = settings.provider;
-  let text = '';
+  const cfg = providerCfg();
 
-  if(provider === 'gemini'){
+  if(cfg.kind === 'gemini'){
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
     const body = {
-      contents:[{role:'user', parts:[{text:VISION_PROMPT}, {inline_data:{mime_type:mime, data:data}}]}],
-      generationConfig:{temperature:0.1, maxOutputTokens:2600, responseMimeType:'application/json'}
+      contents:[{role:'user', parts:[{text:prompt}, {inline_data:{mime_type:mime, data:data}}]}],
+      generationConfig:{temperature:0, maxOutputTokens:3000, responseMimeType:'application/json'}
     };
     const d = await fetchJson(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, 60000);
-    text = (((d.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||'').join('') || '';
+    const parts = (((d.candidates||[])[0]||{}).content||{}).parts || [];
+    return parts.map(x=>x.text||'').join('');
   }
-  else if(provider === 'openai'){
+
+  if(cfg.kind === 'anthropic'){
     const body = {
-      model, temperature:0.1, max_tokens:2600,
-      response_format:{type:'json_object'},
-      messages:[{role:'user', content:[
-        {type:'text', text:VISION_PROMPT},
-        {type:'image_url', image_url:{url:dataUrl}}
-      ]}]
-    };
-    const d = await fetchJson('https://api.openai.com/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
-      body:JSON.stringify(body)
-    }, 60000);
-    text = (((d.choices||[])[0]||{}).message||{}).content || '';
-  }
-  else if(provider === 'anthropic'){
-    const body = {
-      model, max_tokens:2600, temperature:0.1,
+      model, max_tokens:3000, temperature:0,
       messages:[{role:'user', content:[
         {type:'image', source:{type:'base64', media_type:mime, data:data}},
-        {type:'text', text:VISION_PROMPT}
+        {type:'text', text:prompt}
       ]}]
     };
     const d = await fetchJson('https://api.anthropic.com/v1/messages', {
@@ -1295,27 +1714,39 @@ async function callVision(dataUrl){
       },
       body:JSON.stringify(body)
     }, 60000);
-    text = (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-  }
-  else { // openrouter
-    const body = {
-      model, temperature:0.1, max_tokens:2600,
-      messages:[{role:'user', content:[
-        {type:'text', text:VISION_PROMPT},
-        {type:'image_url', image_url:{url:dataUrl}}
-      ]}]
-    };
-    const d = await fetchJson('https://openrouter.ai/api/v1/chat/completions', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
-      body:JSON.stringify(body)
-    }, 60000);
-    text = (((d.choices||[])[0]||{}).message||{}).content || '';
+    return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
   }
 
-  return parseBooksJson(text);
+  // wszystko inne: protokół zgodny z OpenAI
+  const body = {
+    model, temperature:0, max_tokens:3000,
+    messages:[{role:'user', content:[
+      {type:'text', text:prompt},
+      {type:'image_url', image_url:{url:dataUrl}}
+    ]}]
+  };
+  if(settings.provider === 'openai' || settings.provider === 'openrouter') body.response_format = {type:'json_object'};
+  const headers = {'Content-Type':'application/json', 'Authorization':'Bearer ' + key};
+  if(settings.provider === 'openrouter'){
+    headers['HTTP-Referer'] = location.origin;
+    headers['X-Title'] = 'Kartoteka';
+  }
+  const d = await fetchJson(cfg.url, {method:'POST', headers, body:JSON.stringify(body)}, 60000);
+  const msg = ((d.choices||[])[0]||{}).message || {};
+  if(typeof msg.content === 'string') return msg.content;
+  if(Array.isArray(msg.content)) return msg.content.map(c=>c.text||'').join('');
+  return '';
 }
 
+async function callVision(dataUrl, prompt){
+  return parseBooksJson(await callVisionText(dataUrl, prompt || VISION_PROMPT));
+}
+
+function cleanTitlePart(v){
+  const s = String(v == null ? '' : v).replace(/\s+/g,' ').trim();
+  if(!s || /^(null|brak|nieznany|nieznane|n\/a)$/i.test(s)) return '';
+  return s;
+}
 function parseBooksJson(text){
   if(!text) return [];
   let t = String(text).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
@@ -1327,50 +1758,250 @@ function parseBooksJson(text){
   }
   if(!obj) return [];
   const arr = Array.isArray(obj) ? obj : (obj.books || obj.ksiazki || []);
-  return (Array.isArray(arr) ? arr : []).map(b=>({
-    title: (b.title||b.tytul||'').trim() || null,
-    author: (b.author||b.autor||'') ? String(b.author||b.autor).trim() : null,
-    isbn: normalizeIsbn(b.isbn||''),
-    coverType: b.cover_type || null,
-    condition: CONDITION_MAP[b.condition] ? b.condition : null,
-    notes: b.condition_notes || b.uwagi || null,
-    confidence: typeof b.confidence === 'number' ? b.confidence : null,
-    box: Array.isArray(b.box) && b.box.length===4 && b.box.every(n=>typeof n==='number' && n>=0 && n<=1) ? b.box : null
-  })).filter(b=>b.title || b.isbn);
+  return (Array.isArray(arr) ? arr : []).map(b=>{
+    const title    = cleanTitlePart(b.title || b.tytul);
+    const subtitle = cleanTitlePart(b.subtitle || b.podtytul);
+    const series   = cleanTitlePart(b.series || b.seria);
+    const volume   = cleanTitlePart(b.volume || b.tom);
+    const level    = cleanTitlePart(b.level || b.poziom);
+    const author   = cleanTitlePart(b.author || b.autor);
+    const publisher= cleanTitlePart(b.publisher || b.wydawnictwo);
+    return {
+      title: title || null,
+      subtitle: subtitle || null,
+      series: series || null,
+      volume: volume || null,
+      level: level || null,
+      author: author || null,
+      publisher: publisher || null,
+      year: parseYear(b.year || b.rok),
+      /* pełny kontekst dla wyszukiwarki — bez mieszania z innymi książkami */
+      text: [title, subtitle, series, volume, author, publisher].filter(Boolean).join(' '),
+      isbn: normalizeIsbn(b.isbn||''),
+      coverType: b.cover_type || null,
+      condition: CONDITION_MAP[b.condition] ? b.condition : null,
+      notes: cleanTitlePart(b.condition_notes || b.uwagi) || null,
+      confidence: typeof b.confidence === 'number' ? b.confidence : null,
+      box: Array.isArray(b.box) && b.box.length===4 && b.box.every(n=>typeof n==='number' && n>=0 && n<=1) && b.box[2]>b.box[0] && b.box[3]>b.box[1] ? b.box : null
+    };
+  }).filter(b=>b.title || b.isbn);
 }
 
 /* ============================================================
    OCR — zapas bez klucza API
    ============================================================ */
-let tesseractLoading = null;
+function isUsefulOcrLine(text){
+  const clean = String(text||'').replace(/\s+/g,' ').trim();
+  if(clean.length < 3 || clean.length > 110) return false;
+  const letters = (clean.match(/[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/g)||[]).length;
+  if(letters < 3) return false;
+  if(letters / clean.length < .45) return false;            // śmieci typu "|| 1-2 //"
+  return !/^(isbn|www\.|copyright|all rights|cena|str\.)/i.test(clean);
+}
+
+/* Tesseract 5 nie wystawia już data.lines — linie siedzą w blokach.
+   Bez tego aplikacja traciła współrzędne tekstu i każdą linijkę jednej
+   okładki traktowała jak osobną książkę. */
+function collectOcrLines(data){
+  const out = [];
+  const pushLine = l=>{
+    if(!l) return;
+    const bb = l.bbox || {};
+    const text = String(l.text||'').replace(/\s+/g,' ').trim();
+    if(!text) return;
+    out.push({
+      text,
+      conf: typeof l.confidence === 'number' ? l.confidence : 60,
+      x0: bb.x0||0, y0: bb.y0||0, x1: bb.x1||0, y1: bb.y1||0
+    });
+  };
+  const walk = node=>{
+    if(!node) return;
+    if(Array.isArray(node)){ node.forEach(walk); return; }
+    if(Array.isArray(node.lines)) node.lines.forEach(pushLine);
+    if(Array.isArray(node.paragraphs)) walk(node.paragraphs);
+    if(Array.isArray(node.blocks)) walk(node.blocks);
+  };
+  if(Array.isArray(data.lines) && data.lines.length) data.lines.forEach(pushLine);
+  if(!out.length) walk(data.blocks || data.paragraphs || []);
+  if(!out.length && Array.isArray(data.words) && data.words.length){
+    data.words.forEach(w=>pushLine({text:w.text, confidence:w.confidence, bbox:w.bbox}));
+  }
+  if(!out.length && data.text){
+    String(data.text).split(/\r?\n/).forEach(text=>{
+      const t = text.trim();
+      if(t) out.push({text:t, conf:55, x0:0, y0:0, x1:0, y1:0});
+    });
+  }
+  return out;
+}
+
+/* Grupuje linie w okładki: łączymy to, co leży w jednej kolumnie blisko
+   siebie. Jedna grupa = jedna książka = jedno zapytanie do baz. */
+function clusterOcrLines(lines){
+  const n = lines.length;
+  const parent = Array.from({length:n}, (_,i)=>i);
+  const find = a => parent[a] === a ? a : (parent[a] = find(parent[a]));
+  const union = (a,b)=>{ a=find(a); b=find(b); if(a!==b) parent[b]=a; };
+
+  const hs = lines.map(l=>Math.max(6, l.y1-l.y0)).sort((a,b)=>a-b);
+  const medianH = hs.length ? hs[Math.floor(hs.length/2)] : 20;
+
+  for(let i=0;i<n;i++){
+    for(let j=i+1;j<n;j++){
+      const a = lines[i], b = lines[j];
+      const aw = Math.max(1, a.x1-a.x0), bw = Math.max(1, b.x1-b.x0);
+      const ah = Math.max(1, a.y1-a.y0), bh = Math.max(1, b.y1-b.y0);
+      const hh = Math.max(ah, bh);
+      const overlapX = (Math.min(a.x1,b.x1) - Math.max(a.x0,b.x0)) / Math.min(aw,bw);
+      const gapY = Math.max(0, Math.max(a.y0,b.y0) - Math.min(a.y1,b.y1));
+      const gapX = Math.max(0, Math.max(a.x0,b.x0) - Math.min(a.x1,b.x1));
+      const sameColumn = overlapX > .2 && gapY < hh*2.6 + medianH*.8;
+      const sameRow = gapY <= hh*.6 && gapX < hh*1.4;
+      if(sameColumn || sameRow) union(i,j);
+    }
+  }
+  const map = new Map();
+  lines.forEach((l,i)=>{
+    const r = find(i);
+    if(!map.has(r)) map.set(r, []);
+    map.get(r).push(l);
+  });
+  return Array.from(map.values());
+}
+
+function looksLikeAuthor(text){
+  const t = String(text||'').replace(/\s+/g,' ').trim();
+  if(t.length < 5 || t.length > 46) return false;
+  if(isGenericText(t)) return false;
+  return /^[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż.'-]+(\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż.'-]+){1,2}$/.test(t);
+}
+
+/* Z jednej grupy linii robi jednego kandydata do wyszukania. */
+function groupToCandidate(group, W, H){
+  const lines = group
+    .map(l=>Object.assign({}, l, {
+      h: Math.max(1, l.y1-l.y0),
+      weight: Math.max(1, l.y1-l.y0) * Math.log(2 + l.text.length) * (1 + (l.conf||0)/100)
+    }))
+    .sort((a,b)=>b.weight-a.weight);
+
+  const bold = lines.filter(l=>!isGenericText(l.text) && !looksLikeAuthor(l.text));
+  const titleLine = bold[0] || lines[0];
+  const authorLine = lines.find(l=>l !== titleLine && looksLikeAuthor(l.text));
+
+  const byY = group.slice().sort((a,b)=>a.y0-b.y0);
+  const text = byY.map(l=>l.text).join(' ').slice(0, 220);
+
+  const x0 = Math.min.apply(null, group.map(l=>l.x0));
+  const y0 = Math.min.apply(null, group.map(l=>l.y0));
+  const x1 = Math.max.apply(null, group.map(l=>l.x1));
+  const y1 = Math.max.apply(null, group.map(l=>l.y1));
+  const box = (W && H && x1 > x0) ? [x0/W, y0/H, x1/W, y1/H] : null;
+
+  return {
+    title: titleLine ? titleLine.text : '',
+    author: authorLine ? authorLine.text : '',
+    text,
+    box,
+    weight: lines.reduce((s,l)=>s+l.weight, 0),
+    generic: isGenericText(text)
+  };
+}
+
 function loadTesseract(){
   if(window.Tesseract) return Promise.resolve(window.Tesseract);
-  if(tesseractLoading) return tesseractLoading;
-  tesseractLoading = new Promise((res, rej)=>{
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js';
-    s.onload = ()=>res(window.Tesseract);
-    s.onerror = ()=>rej(new Error('Nie udało się pobrać biblioteki OCR'));
-    document.head.appendChild(s);
-  });
-  return tesseractLoading;
+  return loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js')
+    .then(()=>window.Tesseract);
 }
-async function ocrTitle(dataUrl, onProgress){
+function prepareOcrImage(img){
+  const maxSide = 2400;
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * scale));
+  c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+  const ctx = c.getContext('2d', {willReadFrequently:true});
+  ctx.drawImage(img, 0, 0, c.width, c.height);
+  /* Delikatne kontrastowanie poprawia odczyt drobnych napisów na matowych
+     okładkach; skala odwzorowania zostaje 1:1 z obrazem wejściowym. */
+  try{
+    const px = ctx.getImageData(0,0,c.width,c.height);
+    for(let i=0;i<px.data.length;i+=4){
+      const lum = px.data[i]*.2126 + px.data[i+1]*.7152 + px.data[i+2]*.0722;
+      const boosted = Math.max(0, Math.min(255, (lum-128)*1.28+128));
+      px.data[i] = px.data[i+1] = px.data[i+2] = boosted;
+    }
+    ctx.putImageData(px,0,0);
+  }catch(e){}
+  return {dataUrl:c.toDataURL('image/jpeg', .92), width:c.width, height:c.height};
+}
+
+/* Zwraca kandydatów pogrupowanych po okładkach, a nie po linijkach tekstu. */
+async function ocrBooks(img, onProgress){
   const T = await loadTesseract();
-  const worker = await T.createWorker(['pol','eng'], 1, {
-    workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/worker.min.js',
-    corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.0',
+  const prepared = prepareOcrImage(img);
+  const worker = await T.createWorker('pol+eng', 1, {
+    workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js',
+    corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5',
     langPath:'https://tessdata.projectnaptha.com/4.0.0',
     logger: m => { if(onProgress && m.status==='recognizing text') onProgress(m.progress); }
   });
-  const {data} = await worker.recognize(dataUrl);
-  await worker.terminate();
-  const lines = (data.lines||[])
-    .map(l=>({text:(l.text||'').replace(/\s+/g,' ').trim(), conf:l.confidence||0, h:(l.bbox? l.bbox.y1-l.bbox.y0 : 0)}))
-    .filter(l=>l.text.length>2 && l.conf>50 && /[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(l.text));
-  lines.sort((a,b)=> (b.h*Math.log(2+b.text.length)) - (a.h*Math.log(2+a.text.length)) );
-  const top = lines.slice(0,3).map(l=>l.text);
-  return {guess: top.join(' '), lines: top, raw: data.text};
+  try{
+    if(worker.setParameters){
+      await worker.setParameters({
+        tessedit_pageseg_mode:'11',
+        preserve_interword_spaces:'1'
+      });
+    }
+    const {data} = await worker.recognize(prepared.dataUrl, {}, {blocks:true, text:true});
+    const raw = collectOcrLines(data).filter(l=>l.conf >= 32 && isUsefulOcrLine(l.text));
+    if(!raw.length) return {candidates:[], lines:[], raw:data.text||''};
+
+    const positioned = raw.filter(l=>l.x1 > l.x0 && l.y1 > l.y0);
+    const groups = positioned.length >= 2
+      ? clusterOcrLines(positioned)
+      : [raw];
+
+    let cands = groups
+      .map(g=>groupToCandidate(g, prepared.width, prepared.height))
+      .filter(c=>c.title);
+
+    /* Ogólniki ("podręcznik do liceum i technikum") doklejamy do najbliższej
+       sensownej okładki zamiast szukać ich jako osobnej książki. */
+    const real = cands.filter(c=>!c.generic);
+    const junk = cands.filter(c=>c.generic);
+    junk.forEach(j=>{
+      if(!j.box || !real.length) return;
+      const jc = [(j.box[0]+j.box[2])/2, (j.box[1]+j.box[3])/2];
+      let best = null, bestD = Infinity;
+      real.forEach(r=>{
+        if(!r.box) return;
+        const rc = [(r.box[0]+r.box[2])/2, (r.box[1]+r.box[3])/2];
+        const d = Math.hypot(jc[0]-rc[0], jc[1]-rc[1]);
+        if(d < bestD){ bestD = d; best = r; }
+      });
+      if(best && bestD < .28){
+        best.text = (best.text + ' ' + j.text).slice(0,240);
+        best.box = [
+          Math.min(best.box[0], j.box[0]), Math.min(best.box[1], j.box[1]),
+          Math.max(best.box[2], j.box[2]), Math.max(best.box[3], j.box[3])
+        ];
+      }
+    });
+    cands = real.length ? real : cands;
+
+    cands.sort((a,b)=>b.weight-a.weight);
+    return {
+      candidates: cands.slice(0, 12).map(c=>({
+        title:c.title, author:c.author, text:c.text, box:c.box,
+        badges:[{text:'tekst odczytany lokalnie (OCR)', kind:'scan'}]
+      })),
+      lines: raw,
+      raw: data.text || ''
+    };
+  }finally{
+    try{ await worker.terminate(); }catch(e){}
+  }
 }
 
 /* ============================================================
@@ -1385,12 +2016,30 @@ function renderCondRow(entry){
     ).join('') + '</div>';
 }
 
+function renderAlts(entry){
+  if(!entry.alts || !entry.alts.length) return '';
+  const rows = entry.alts.map((x,i)=>
+    '<button class="alt" type="button" data-alt="'+i+'">' +
+      (x.meta.cover ? '<img src="'+esc(x.meta.cover)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">' : '<span class="alt-noimg">?</span>') +
+      '<span class="grow"><b>'+esc(x.meta.title)+'</b>' +
+      '<span>'+esc(x.meta.authors) + (x.meta.year ? ' · '+x.meta.year : '') +
+      ' · dopasowanie ' + Math.round((x.score||0)*100) + '%' +
+      (x.cover != null ? ' (okładka ' + Math.round(x.cover*100) + '%)' : '') + '</span></span>' +
+    '</button>'
+  ).join('');
+  return '<div class="alts" data-alts' + (entry.altsOpen ? '' : ' hidden') + '>' +
+    '<p class="alts-head">Inne wydania pasujące do tego zdjęcia — kliknij, żeby podmienić:</p>' + rows + '</div>';
+}
+
 function renderBookCard(entry){
   const m = entry.meta, v = entry.valuation;
-  const cover = entry.thumb || m.cover;
+  const cover = m.cover || entry.shot;
   const coverHtml = cover
     ? '<img class="book-cover" src="'+esc(cover)+'" alt="Okładka: '+esc(m.title)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'book-cover placeholder\',textContent:\'?\'}))">'
     : '<div class="book-cover placeholder">?</div>';
+  const shotHtml = (entry.shot && m.cover)
+    ? '<img class="book-shot" src="'+esc(entry.shot)+'" alt="Wycinek z Twojego zdjęcia" title="wycinek z Twojego zdjęcia" loading="lazy">'
+    : '';
 
   const metaLine = [
     m.publisher ? '<b>Wydawca</b> ' + esc(m.publisher) : null,
@@ -1399,9 +2048,16 @@ function renderBookCard(entry){
     m.isbn ? '<b>ISBN</b> ' + esc(m.isbn) : null
   ].filter(Boolean).join(' &nbsp;·&nbsp; ');
 
-  const chips = (entry.badges||[]).map(b =>
-    '<span class="chip '+(b.kind||'')+'">'+esc(b.text)+'</span>'
-  ).join('');
+  const resultBadges = (entry.badges||[]).slice();
+  if(typeof m.coverMatch === 'number'){
+    resultBadges.push(m.coverMatch >= .62
+      ? {text:'okładka zgodna ze zdjęciem', kind:'ok'}
+      : {text:'okładka tylko częściowo zgodna', kind:'warning'});
+  }
+  if(typeof m.matchScore === 'number' && m.matchScore > 0 && m.matchScore < SURE_MATCH){
+    resultBadges.push({text:'sprawdź tytuł — dopasowanie ' + Math.round(m.matchScore*100) + '%', kind:'warning'});
+  }
+  const chips = resultBadges.map(b => '<span class="chip '+(b.kind||'')+'">'+esc(b.text)+'</span>').join('');
 
   const links = marketLinks(m).map(([n,u]) =>
     '<a href="'+esc(u)+'" target="_blank" rel="noopener">Sprawdź na '+esc(n)+'</a>'
@@ -1411,7 +2067,7 @@ function renderBookCard(entry){
   const factorLine = v.factors.length ? ' Uwzględniono: ' + esc(v.factors.join(', ')) + '.' : '';
 
   return '' +
-  '<div class="book-head">' + coverHtml +
+  '<div class="book-head">' + coverHtml + shotHtml +
     '<div class="grow">' +
       '<h3 class="book-title">' + esc(m.title) + '</h3>' +
       '<p class="book-author">' + esc(m.authors) + '</p>' +
@@ -1435,22 +2091,44 @@ function renderBookCard(entry){
   '<div class="market-links">' + links + '</div>' +
   '<div class="book-actions">' +
     '<button class="btn small" data-act="save" type="button">' + (entry.savedId ? 'Zapisano w kartotece' : 'Zapisz w kartotece') + '</button>' +
+    (entry.alts && entry.alts.length ? '<button class="btn ghost small" data-act="alts" type="button">To nie ta książka?</button>' : '') +
     '<button class="btn ghost small" data-act="copy" type="button">Kopiuj opis oferty</button>' +
     '<button class="btn ghost small" data-act="share" type="button">Udostępnij</button>' +
     '<button class="btn ghost small" data-act="remove" type="button">Usuń z wyników</button>' +
-  '</div>';
+  '</div>' +
+  renderAlts(entry);
 }
 
 function mountEntry(container, entry){
   const el = document.createElement('article');
   el.className = 'book pending';
   el.dataset.id = entry.id;
-  el.innerHTML = '<div class="book-head"><div class="book-cover placeholder">…</div><div class="grow">' +
+  el.innerHTML = '<div class="book-head">' +
+    (entry.shot ? '<img class="book-cover" src="'+esc(entry.shot)+'" alt="">' : '<div class="book-cover placeholder">…</div>') +
+    '<div class="grow">' +
     '<h3 class="book-title">' + esc(entry.label || 'Szukam w bazach…') + '</h3>' +
-    '<p class="book-author">sprawdzam Google Books i Open Library</p></div></div>';
+    '<p class="book-author">sprawdzam Google Books i Open Library, porównuję okładki</p></div></div>';
   container.appendChild(el);
   entry.el = el;
   return el;
+}
+
+/* podmiana wyniku na jedno z pozostałych wydań */
+function applyAlternative(entry, idx){
+  const alt = (entry.alts||[])[idx];
+  if(!alt) return;
+  const previous = {meta:entry.meta, score:entry.meta.matchScore, cover:entry.meta.coverMatch};
+  entry.alts = entry.alts.filter((_,i)=>i!==idx);
+  entry.alts.unshift({meta:previous.meta, score:previous.score||0, cover:previous.cover});
+  entry.meta = alt.meta;
+  entry.meta.matchScore = alt.score;
+  entry.meta.coverMatch = alt.cover;
+  entry.badges = (entry.badges||[]).filter(b=>b.text !== 'wydanie wybrane ręcznie');
+  entry.badges.push({text:'wydanie wybrane ręcznie', kind:'scan'});
+  entry.altsOpen = false;
+  paintEntry(entry);
+  if(entry.savedId) updateSaved(entry);
+  toast('Podmieniono wydanie');
 }
 
 function paintEntry(entry){
@@ -1468,6 +2146,8 @@ function paintEntry(entry){
       if(entry.savedId) updateSaved(entry);
       return;
     }
+    const alt = e.target.closest('[data-alt]');
+    if(alt){ applyAlternative(entry, Number(alt.dataset.alt)); return; }
     const ab = e.target.closest('[data-act]');
     if(!ab) return;
     const act = ab.dataset.act;
@@ -1475,15 +2155,61 @@ function paintEntry(entry){
     if(act === 'remove'){ entry.el.remove(); }
     if(act === 'copy'){ copyOffer(entry); }
     if(act === 'share'){ shareEntry(entry); }
+    if(act === 'alts'){
+      const box = entry.el.querySelector('[data-alts]');
+      if(box){ entry.altsOpen = box.hidden; box.hidden = !box.hidden; }
+    }
   });
 }
 
-function failEntry(entry, msg){
+function failEntry(entry, msg, alts){
+  entry.alts = alts || [];
   entry.el.className = 'book failed';
-  entry.el.innerHTML = '<h3 class="book-title">' + esc(entry.label || 'Nie rozpoznano') + '</h3>' +
-    '<p class="book-author">' + esc(msg) + '</p>' +
-    '<div class="book-actions"><button class="btn ghost small" data-act="remove" type="button">Usuń</button></div>';
-  entry.el.querySelector('[data-act=remove]').addEventListener('click', ()=>entry.el.remove());
+  entry.el.innerHTML =
+    '<div class="book-head">' +
+    (entry.shot ? '<img class="book-cover" src="'+esc(entry.shot)+'" alt="Wycinek z Twojego zdjęcia">' : '') +
+    '<div class="grow">' +
+      '<h3 class="book-title">' + esc(entry.label || 'Nie rozpoznano') + '</h3>' +
+      '<p class="book-author">' + esc(msg) + '</p>' +
+    '</div></div>' +
+    '<div class="book-actions">' +
+      (entry.alts.length ? '<button class="btn small" data-act="alts" type="button">Pokaż propozycje (' + entry.alts.length + ')</button>' : '') +
+      '<button class="btn ghost small" data-act="manual" type="button">Popraw tytuł ręcznie</button>' +
+      '<button class="btn ghost small" data-act="remove" type="button">Usuń</button>' +
+    '</div>' + renderAlts(entry);
+
+  entry.el.addEventListener('click', e=>{
+    const alt = e.target.closest('[data-alt]');
+    if(alt){
+      const chosen = entry.alts[Number(alt.dataset.alt)];
+      if(!chosen) return;
+      entry.alts = entry.alts.filter(x=>x !== chosen);
+      entry.meta = chosen.meta;
+      entry.meta.matchScore = chosen.score;
+      entry.meta.coverMatch = chosen.cover;
+      entry.badges = [{text:'wydanie wybrane ręcznie', kind:'scan'}];
+      entry.bound = false;
+      liveEntries.push(entry);
+      paintEntry(entry);
+      autoSave(entry);
+      return;
+    }
+    const ab = e.target.closest('[data-act]');
+    if(!ab) return;
+    if(ab.dataset.act === 'remove'){ entry.el.remove(); return; }
+    if(ab.dataset.act === 'alts'){
+      const box = entry.el.querySelector('[data-alts]');
+      if(box){ entry.altsOpen = box.hidden; box.hidden = !box.hidden; }
+      return;
+    }
+    if(ab.dataset.act === 'manual'){
+      goTab('isbn');
+      const guess = (entry.cand && (entry.cand.title || entry.cand.text)) || entry.label || '';
+      $('#titleInput').value = guess === 'Pozycja' ? '' : guess;
+      $('#titleInput').focus();
+      toast('Dopisz lub popraw tytuł, a następnie wybierz „Znajdź książkę”.');
+    }
+  });
 }
 
 function offerText(entry){
@@ -1532,7 +2258,7 @@ function entryToRecord(entry){
     publisher: m.publisher || '',
     year: m.year || '',
     pages: m.pages || '',
-    cover: entry.thumb || m.cover || '',
+    cover: m.cover || entry.shot || '',
     condition: entry.condition,
     notes: entry.aiNotes || '',
     min: v.min, max: v.max, mid: v.mid,
@@ -1703,27 +2429,44 @@ $('#printBtn').addEventListener('click', ()=>window.print());
    ============================================================ */
 const liveEntries = [];
 
-async function processCandidate(container, cand){
+async function processCandidate(container, cand, seenResolved){
   const entry = {
     id: uid(),
     label: cand.title || (cand.isbn ? 'ISBN ' + cand.isbn : 'Pozycja'),
     condition: cand.condition || settings.defCond,
     aiNotes: cand.notes || null,
-    thumb: cand.thumb || null,
+    shot: cand.thumb || null,
     badges: cand.badges || [],
+    cand: cand,
+    alts: [],
     savedId: null
   };
   mountEntry(container, entry);
   try{
-    const meta = await resolveBook({isbn:cand.isbn, title:cand.title, author:cand.author});
-    if(!meta){
+    const res = await resolveSmart(cand);
+    if(!res){
       failEntry(entry, cand.isbn
         ? 'Nie znalazłem tego numeru w Google Books ani Open Library. Sprawdź cyfry albo wpisz tytuł ręcznie.'
-        : 'Nie dopasowałem tytułu do żadnego wydania. Spróbuj wyraźniejszego zdjęcia okładki albo wpisz ISBN.');
+        : 'Nie dopasowałem tej okładki do żadnego wydania. Zrób ostrzejsze zdjęcie albo wpisz ISBN z tyłu książki.');
       return null;
     }
+    const best = res.best;
+    if(!cand.isbn && settings.strict && !cand.manual && best.score < MIN_MATCH){
+      failEntry(entry,
+        'Żadne wydanie nie pasuje wystarczająco pewnie (najlepsze dopasowanie ' + Math.round(best.score*100) + '%). Wolę nie zgadywać — wybierz z propozycji albo popraw tytuł.',
+        [best].concat(res.alts));
+      return null;
+    }
+    const meta = best.meta;
     if(cand.isbn && !meta.isbn) meta.isbn = cand.isbn;
+    const identity = meta.isbn ? 'isbn:'+meta.isbn : 'book:'+foldText(meta.title)+'|'+foldText(meta.authors);
+    if(seenResolved && seenResolved.has(identity)){
+      entry.el.remove();
+      return null;
+    }
+    if(seenResolved) seenResolved.add(identity);
     entry.meta = meta;
+    entry.alts = res.alts;
     liveEntries.push(entry);
     paintEntry(entry);
     autoSave(entry);
@@ -1738,6 +2481,7 @@ async function processCandidate(container, cand){
    PRZEPŁYW: ZDJĘCIE
    ============================================================ */
 let lastFile = null, lastImg = null, lastDataUrl = null;
+let photoQueue = [];
 
 function setPhotoStatus(msg, kind){
   const el = $('#photoStatus');
@@ -1749,102 +2493,237 @@ function photoBusy(on){
   $('#analyzeBtn').disabled = !!on;
 }
 
-async function acceptImage(file){
-  if(!file || !file.type.startsWith('image/')){ toast('To nie jest plik graficzny'); return; }
-  lastFile = file;
+/* ---------- wczytywanie plików: jpg, png, webp, avif, gif, bmp, tiff, heic, pdf ---------- */
+async function heicToBlob(file){
+  await loadScript('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');
+  if(!window.heic2any) throw new Error('Brak konwertera HEIC');
+  const out = await window.heic2any({blob:file, toType:'image/jpeg', quality:.92});
+  return Array.isArray(out) ? out[0] : out;
+}
+async function pdfFirstPage(file){
+  const pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.mjs';
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjs.getDocument({data:buf}).promise;
+  const page = await doc.getPage(1);
+  const viewport = page.getViewport({scale:2});
+  const c = document.createElement('canvas');
+  c.width = viewport.width; c.height = viewport.height;
+  await page.render({canvasContext:c.getContext('2d'), viewport}).promise;
+  return loadImage(c.toDataURL('image/jpeg', .92));
+}
+async function fileToImage(file){
+  const name = (file.name||'').toLowerCase();
+  const type = (file.type||'').toLowerCase();
+  if(type === 'application/pdf' || /\.pdf$/.test(name)) return pdfFirstPage(file);
+  let blob = file;
+  if(/heic|heif/.test(type) || /\.(heic|heif)$/.test(name)){
+    try{ blob = await heicToBlob(file); }
+    catch(e){ /* nowsze Safari otworzy HEIC bez konwersji */ }
+  }
+  const url = await fileToDataUrl(blob);
   try{
-    const raw = await fileToDataUrl(file);
-    lastImg = await loadImage(raw);
-    lastDataUrl = resizeToDataUrl(lastImg, 1500, 0.86);
-    $('#preview').src = lastDataUrl;
-    $('#previewWrap').classList.add('active');
-    $('#imgInfo').textContent = lastImg.naturalWidth + '×' + lastImg.naturalHeight + ' px · ' + Math.round(file.size/1024) + ' kB';
-    setPhotoStatus('Zdjęcie gotowe. Kliknij „Rozpoznaj i wyceń”.');
+    return await loadImage(url);
   }catch(e){
-    setPhotoStatus('Nie udało się otworzyć tego zdjęcia.', 'err');
+    if(blob === file && /\.(heic|heif)$/.test(name)){
+      const conv = await heicToBlob(file);
+      return loadImage(await fileToDataUrl(conv));
+    }
+    throw e;
   }
 }
 
+async function acceptImages(files){
+  const arr = Array.from(files||[]).slice(0,12);
+  if(!arr.length) return;
+  setPhotoStatus('Wczytuję ' + arr.length + ' ' + (arr.length===1?'plik':'plików') + '…');
+  const loaded = [];
+  for(const f of arr){
+    try{
+      const img = await fileToImage(f);
+      if(!img.naturalWidth) throw new Error('pusty obraz');
+      loaded.push({file:f, img, dataUrl:resizeToDataUrl(img, 1600, 0.88)});
+    }catch(e){
+      toast((f.name || 'plik') + ': ' + (e.message || 'nie udało się otworzyć'));
+    }
+  }
+  if(!loaded.length){ setPhotoStatus('Nie udało się otworzyć tego pliku. Obsługiwane są JPG, PNG, WEBP, AVIF, GIF, BMP, TIFF, HEIC i PDF.', 'err'); return; }
+  photoQueue = loaded;
+  lastFile = loaded[0].file; lastImg = loaded[0].img; lastDataUrl = loaded[0].dataUrl;
+  $('#preview').src = loaded[0].dataUrl;
+  $('#previewWrap').classList.add('active');
+  const px = loaded[0].img.naturalWidth + '×' + loaded[0].img.naturalHeight + ' px';
+  $('#imgInfo').textContent = loaded.length > 1
+    ? (loaded.length + ' zdjęcia w kolejce · pierwsze ' + px)
+    : (px + ' · ' + Math.round((loaded[0].file.size||0)/1024) + ' kB');
+  setPhotoStatus('Gotowe. Kliknij „Rozpoznaj i wyceń”.');
+}
+function acceptImage(file){ return acceptImages([file]); }
+
+/* miniatura + podpis wizualny wycinka z Twojego zdjęcia */
+function attachVisual(cand, img, allowFullFrame){
+  /* Bez ramki książki porównanie okładek ma sens tylko wtedy, gdy w kadrze
+     jest jedna książka — inaczej każdy kandydat dostałby ten sam obrazek. */
+  if(!cand.box && !allowFullFrame) return cand;
+  try{
+    const W = img.naturalWidth, H = img.naturalHeight;
+    let box = cand.box;
+    if(!box) box = [0,0,1,1];
+    const x0 = Math.max(0, box[0])*W, y0 = Math.max(0, box[1])*H;
+    const x1 = Math.min(1, box[2])*W, y1 = Math.min(1, box[3])*H;
+    const w = Math.max(12, x1-x0), h = Math.max(12, y1-y0);
+    if(!cand.thumb) cand.thumb = cropToDataUrl(img, box, cand.box ? .03 : 0);
+    cand.sig = signatureFromSource(img, x0, y0, w, h);
+  }catch(e){}
+  return cand;
+}
+
+/* Z jednego zdjęcia robi listę kandydatów — po jednym na książkę. */
+async function buildCandidates(shot, prefix){
+  setPhotoStatus(prefix + 'Szukam kodów kreskowych na zdjęciu…');
+  let codes = [];
+  try{ codes = await detectBarcodes(shot.img); }catch(e){}
+
+  let books = [];
+  if(hasVision()){
+    setPhotoStatus(prefix + 'Rozpoznaję okładki i oceniam stan egzemplarzy…');
+    try{
+      books = await callVision(shot.dataUrl);
+    }catch(err){
+      setPhotoStatus('Model wizyjny odmówił: ' + err.message + ' — czytam okładki lokalnie.', 'warn');
+    }
+    /* Druga tura: model ogląda każdą okładkę z osobna, bez sąsiadów w kadrze.
+       To najskuteczniej eliminuje mieszanie tytułów z różnych książek. */
+    if(books.length && settings.deepScan && books.length <= 8){
+      for(let i=0;i<books.length;i++){
+        const b = books[i];
+        if(!b.box) continue;
+        setPhotoStatus(prefix + 'Doczytuję okładkę ' + (i+1) + ' z ' + books.length + '…');
+        try{
+          const crop = cropToDataUrl(shot.img, b.box, .03);
+          const refined = (await callVision(crop, VISION_PROMPT_ONE))[0];
+          if(refined && refined.title){
+            books[i] = Object.assign({}, b, {
+              title: refined.title,
+              subtitle: refined.subtitle || b.subtitle,
+              series: refined.series || b.series,
+              volume: refined.volume || b.volume,
+              author: refined.author || b.author,
+              publisher: refined.publisher || b.publisher,
+              isbn: refined.isbn || b.isbn,
+              notes: refined.notes || b.notes,
+              condition: refined.condition || b.condition,
+              confidence: Math.max(b.confidence||0, refined.confidence||0),
+              text: [refined.title, refined.subtitle, refined.series, refined.volume, refined.author, refined.publisher].filter(Boolean).join(' '),
+              box: b.box,
+              deep: true
+            });
+          }
+        }catch(e){}
+      }
+    }
+  }
+
+  let list = [];
+  const usedCodes = new Set();
+
+  if(books.length){
+    list = books.map(b=>{
+      let isbn = b.isbn;
+      if(isbn) usedCodes.add(isbn);
+      else {
+        const hit = codes.find(c=>!usedCodes.has(c.isbn) && b.box && c.box && boxContains(b.box, c.box));
+        if(hit){ isbn = hit.isbn; usedCodes.add(isbn); }
+      }
+      return attachVisual({
+        isbn,
+        title: b.title,
+        author: b.author,
+        text: b.text || b.title,
+        condition: b.condition,
+        notes: b.notes,
+        box: b.box,
+        badges: [
+          {text:'rozpoznane ze zdjęcia', kind:'ai'},
+          b.deep ? {text:'okładka doczytana z bliska', kind:'ai'} : null,
+          b.condition ? {text:'stan oceniony automatycznie', kind:'ai'} : null,
+          isbn ? {text:'ISBN z kodu kreskowego', kind:'scan'} : null,
+          b.confidence != null ? {text:'pewność odczytu ' + Math.round(b.confidence*100) + '%'} : null
+        ].filter(Boolean)
+      }, shot.img, books.length === 1);
+    });
+  }
+  else {
+    setPhotoStatus(prefix + 'Czytam tekst z okładek lokalnie (to może potrwać kilkanaście sekund)…');
+    try{
+      const r = await ocrBooks(shot.img, pr=>{
+        setPhotoStatus(prefix + 'Czytam tekst z okładek… ' + Math.round(pr*100) + '%');
+      });
+      const found = r.candidates || [];
+      list = found.map(c=>attachVisual(c, shot.img, found.length === 1));
+    }catch(e){
+      setPhotoStatus('Nie udało się uruchomić lokalnego OCR: ' + e.message, 'err');
+    }
+    list.forEach(c=>{
+      const hit = codes.find(x=>!usedCodes.has(x.isbn) && c.box && x.box && boxContains(c.box, x.box));
+      if(hit){ c.isbn = hit.isbn; usedCodes.add(hit.isbn); c.badges = (c.badges||[]).concat([{text:'ISBN z kodu kreskowego', kind:'scan'}]); }
+    });
+  }
+
+  // jedna książka w kadrze + jeden kod = na pewno ta sama książka
+  if(list.length === 1 && !list[0].isbn){
+    const free = codes.find(c=>!usedCodes.has(c.isbn));
+    if(free){
+      list[0].isbn = free.isbn; usedCodes.add(free.isbn);
+      list[0].badges = (list[0].badges||[]).concat([{text:'ISBN z kodu kreskowego', kind:'scan'}]);
+    }
+  }
+  // kody, których nie udało się przypisać do żadnej okładki
+  codes.filter(c=>!usedCodes.has(c.isbn)).forEach(c=>{
+    list.push({
+      isbn: c.isbn,
+      thumb: c.box ? cropToDataUrl(shot.img, c.box, .14) : null,
+      badges: [{text:'kod kreskowy ze zdjęcia', kind:'scan'}]
+    });
+  });
+
+  return list;
+}
+
 async function analyzePhoto(){
-  if(!lastImg){ toast('Najpierw wrzuć zdjęcie'); return; }
+  if(!photoQueue.length){ toast('Najpierw wrzuć zdjęcie'); return; }
   const container = $('#photoResults');
   container.innerHTML = '';
   photoBusy(true);
 
+  const seenResolved = new Set();
+  let total = 0, okCount = 0;
+
   try{
-    // 1. kody kreskowe
-    setPhotoStatus('Szukam kodów kreskowych na zdjęciu…');
-    let isbns = [];
-    try{ isbns = await detectBarcodes(lastImg); }catch(e){}
+    for(let idx=0; idx<photoQueue.length; idx++){
+      const shot = photoQueue[idx];
+      lastFile = shot.file; lastImg = shot.img; lastDataUrl = shot.dataUrl;
+      const prefix = photoQueue.length > 1 ? ('Zdjęcie ' + (idx+1) + '/' + photoQueue.length + ': ') : '';
 
-    // 2. model wizyjny
-    let visionBooks = [];
-    if(hasVision()){
-      setPhotoStatus('Rozpoznaję okładki i oceniam stan egzemplarzy…');
-      try{
-        visionBooks = await callVision(lastDataUrl);
-      }catch(err){
-        setPhotoStatus('Model wizyjny odmówił: ' + err.message, 'err');
+      const candidates = await buildCandidates(shot, prefix);
+      total += candidates.length;
+      if(!candidates.length) continue;
+
+      setPhotoStatus(prefix + 'Znalazłem książek: ' + candidates.length + '. Dopasowuję wydania i liczę wyceny…');
+      for(const c of candidates){
+        const e = await processCandidate(container, c, seenResolved);
+        if(e) okCount++;
+        await sleep(90);
       }
     }
 
-    // 3. sklejanie wyników
-    let candidates = [];
-    if(visionBooks.length){
-      const pool = isbns.slice();
-      candidates = visionBooks.map(b=>{
-        let isbn = b.isbn;
-        if(isbn){ const i = pool.indexOf(isbn); if(i>=0) pool.splice(i,1); }
-        else if(visionBooks.length === 1 && pool.length === 1){ isbn = pool.shift(); }
-        return {
-          isbn, title:b.title, author:b.author,
-          condition:b.condition, notes:b.notes,
-          thumb: b.box ? cropToDataUrl(lastImg, b.box) : null,
-          badges: [
-            {text:'rozpoznane ze zdjęcia', kind:'ai'},
-            b.condition ? {text:'stan oceniony automatycznie', kind:'ai'} : null,
-            isbn ? {text:'ISBN z kodu', kind:'scan'} : null,
-            b.confidence!=null ? {text:'pewność ' + Math.round(b.confidence*100) + '%'} : null
-          ].filter(Boolean)
-        };
-      });
-      // kody, których model nie przypisał do żadnej książki
-      pool.forEach(i=>candidates.push({isbn:i, badges:[{text:'kod kreskowy ze zdjęcia', kind:'scan'}]}));
-    }
-    else if(isbns.length){
-      candidates = isbns.map(i=>({isbn:i, badges:[{text:'kod kreskowy ze zdjęcia', kind:'scan'}]}));
-    }
-    else {
-      // 4. OCR jako ostatnia deska ratunku
-      setPhotoStatus('Nie widzę kodu kreskowego. Odczytuję tytuł z okładki (to może potrwać kilkanaście sekund)…');
-      try{
-        const r = await ocrTitle(lastDataUrl, p=>{
-          setPhotoStatus('Czytam tekst z okładki… ' + Math.round(p*100) + '%');
-        });
-        if(r.guess && r.guess.length > 3){
-          candidates = [{title:r.guess, badges:[{text:'tytuł odczytany z okładki (OCR)', kind:'scan'}]}];
-        }
-      }catch(e){
-        setPhotoStatus('Nie udało się uruchomić OCR: ' + e.message, 'err');
-      }
-    }
-
-    if(!candidates.length){
+    if(!total){
       setPhotoStatus(hasVision()
         ? 'Nie rozpoznałem żadnej książki na tym zdjęciu. Zrób kadr z bliska, na wprost okładki i przy dobrym świetle.'
-        : 'Nie znalazłem kodu kreskowego ani czytelnego tytułu. Włącz rozpoznawanie modelem wizyjnym w Ustawieniach albo sfotografuj kod kreskowy z tyłu książki.', 'err');
-      photoBusy(false);
+        : 'Nie znalazłem kodu kreskowego ani czytelnego tytułu. Włącz model wizyjny w Ustawieniach albo sfotografuj kod kreskowy z tyłu książki.', 'err');
       return;
     }
-
-    setPhotoStatus('Znalazłem pozycji: ' + candidates.length + '. Pobieram dane i liczę wyceny…');
-    let okCount = 0;
-    for(const c of candidates){
-      const e = await processCandidate(container, c);
-      if(e) okCount++;
-      await sleep(120); // delikatnie dla limitów API
-    }
-    setPhotoStatus('Gotowe. Wycenionych pozycji: ' + okCount + ' z ' + candidates.length + '.', 'ok');
+    setPhotoStatus('Gotowe. Wycenionych pozycji: ' + okCount + ' z ' + total + '.', okCount ? 'ok' : 'err');
     if(okCount) beep();
   }catch(err){
     setPhotoStatus('Coś poszło nie tak: ' + err.message, 'err');
@@ -1859,30 +2738,33 @@ dz.addEventListener('click', ()=> $('#fileInput').click());
 dz.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('#fileInput').click(); }});
 $('#pickFileBtn').addEventListener('click', e=>{ e.stopPropagation(); $('#fileInput').click(); });
 $('#pickCamBtn').addEventListener('click', e=>{ e.stopPropagation(); $('#camInput').click(); });
-$('#fileInput').addEventListener('change', e=>{ if(e.target.files[0]) acceptImage(e.target.files[0]); e.target.value=''; });
-$('#camInput').addEventListener('change', e=>{ if(e.target.files[0]) acceptImage(e.target.files[0]); e.target.value=''; });
+$('#fileInput').addEventListener('change', e=>{ if(e.target.files.length) acceptImages(e.target.files); e.target.value=''; });
+$('#camInput').addEventListener('change', e=>{ if(e.target.files.length) acceptImages(e.target.files); e.target.value=''; });
 $('#analyzeBtn').addEventListener('click', analyzePhoto);
 $('#clearImgBtn').addEventListener('click', ()=>{
   lastFile = lastImg = lastDataUrl = null;
+  photoQueue = [];
   $('#previewWrap').classList.remove('active');
   $('#photoResults').innerHTML = '';
+  $('#imgInfo').textContent = '';
   setPhotoStatus('');
 });
 ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('dragging'); }));
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('dragging'); }));
 dz.addEventListener('drop', e=>{
-  const f = e.dataTransfer.files && e.dataTransfer.files[0];
-  if(f) acceptImage(f);
+  const f = e.dataTransfer.files;
+  if(f && f.length) acceptImages(f);
 });
 window.addEventListener('paste', e=>{
   const items = (e.clipboardData||{}).items || [];
+  const files = [];
   for(const it of items){
-    if(it.type && it.type.startsWith('image/')){
+    if(it.type && (it.type.startsWith('image/') || it.type === 'application/pdf')){
       const f = it.getAsFile();
-      if(f){ goTab('photo'); acceptImage(f); toast('Wklejono zdjęcie ze schowka'); }
-      break;
+      if(f) files.push(f);
     }
   }
+  if(files.length){ goTab('photo'); acceptImages(files); toast('Wklejono ze schowka'); }
 });
 
 /* ============================================================
@@ -1923,6 +2805,37 @@ async function runIsbnSearch(){
 }
 $('#isbnBtn').addEventListener('click', runIsbnSearch);
 $('#isbnInput').addEventListener('keydown', e=>{ if(e.key==='Enter') runIsbnSearch(); });
+
+function splitTitleAuthor(raw){
+  const parts = String(raw||'').split(/\s+(?:—|–)\s+|\s+-\s+/).map(s=>s.trim()).filter(Boolean);
+  return {title:parts[0]||'', author:parts.slice(1).join(' ')||''};
+}
+async function runTitleSearch(){
+  const query = splitTitleAuthor($('#titleInput').value);
+  if(query.title.length < 2){
+    $('#isbnStatus').textContent = 'Wpisz przynajmniej dwa znaki tytułu.';
+    $('#isbnStatus').className = 'status err';
+    return;
+  }
+  const container = $('#isbnResults');
+  container.innerHTML = '';
+  $('#isbnProgress').classList.add('active');
+  $('#titleBtn').disabled = true;
+  $('#isbnStatus').className = 'status';
+  $('#isbnStatus').textContent = 'Szukam najlepszego wydania w bazach…';
+  const entry = await processCandidate(container, {
+    title:query.title, author:query.author, text:query.title + ' ' + query.author, manual:true,
+    badges:[{text:'tytuł wpisany ręcznie', kind:'scan'}]
+  });
+  $('#isbnProgress').classList.remove('active');
+  $('#titleBtn').disabled = false;
+  $('#isbnStatus').className = entry ? 'status ok' : 'status err';
+  $('#isbnStatus').textContent = entry
+    ? 'Gotowe. Sprawdź tytuł i wybierz stan egzemplarza.'
+    : 'Nie znalazłem wystarczająco pewnego wyniku. Spróbuj dopisać autora albo ISBN.';
+}
+$('#titleBtn').addEventListener('click', runTitleSearch);
+$('#titleInput').addEventListener('keydown', e=>{ if(e.key==='Enter') runTitleSearch(); });
 
 /* ============================================================
    PRZEPŁYW: SKANER KAMERĄ
@@ -2002,19 +2915,23 @@ function fillSettings(){
   $('#providerSel').value = settings.provider;
   $('#apiKeyInput').value = getApiKey();
   $('#modelInput').value = settings.model;
-  $('#modelInput').placeholder = DEFAULT_MODELS[settings.provider];
+  $('#modelInput').placeholder = providerCfg().model;
   $('#currencySel').value = settings.currency;
   $('#channelSel').value = settings.channel;
   $('#defCondSel').value = settings.defCond;
   $('#autoSaveChk').checked = settings.autoSave;
   $('#soundChk').checked = settings.sound;
+  $('#deepScanChk').checked = settings.deepScan;
+  $('#coverMatchChk').checked = settings.coverMatch;
+  $('#imgProxyChk').checked = settings.imgProxy;
+  $('#strictChk').checked = settings.strict;
   $('#noKeyNotice').style.display = hasVision() ? 'none' : '';
 }
 $('#providerSel').addEventListener('change', e=>{
   settings.provider = e.target.value;
   settings.model = '';
   $('#modelInput').value = '';
-  $('#modelInput').placeholder = DEFAULT_MODELS[settings.provider];
+  $('#modelInput').placeholder = providerCfg().model;
   saveSettings();
 });
 $('#modelInput').addEventListener('change', e=>{ settings.model = e.target.value.trim(); saveSettings(); });
@@ -2023,6 +2940,10 @@ $('#channelSel').addEventListener('change', e=>{ settings.channel = e.target.val
 $('#defCondSel').addEventListener('change', e=>{ settings.defCond = e.target.value; saveSettings(); });
 $('#autoSaveChk').addEventListener('change', e=>{ settings.autoSave = e.target.checked; saveSettings(); });
 $('#soundChk').addEventListener('change', e=>{ settings.sound = e.target.checked; saveSettings(); });
+$('#deepScanChk').addEventListener('change', e=>{ settings.deepScan = e.target.checked; saveSettings(); });
+$('#coverMatchChk').addEventListener('change', e=>{ settings.coverMatch = e.target.checked; saveSettings(); });
+$('#imgProxyChk').addEventListener('change', e=>{ settings.imgProxy = e.target.checked; saveSettings(); });
+$('#strictChk').addEventListener('change', e=>{ settings.strict = e.target.checked; saveSettings(); });
 
 function repaintAll(){
   // przelicza widoczne wyniki po zmianie waluty lub kanału sprzedaży
@@ -2072,6 +2993,8 @@ const HELP_HTML = `
 <h2>Jak to działa</h2>
 <h3>Zdjęcie jednej książki</h3>
 <p>Aplikacja najpierw szuka kodu kreskowego EAN — jeśli go widać, ma od razu pewny numer ISBN. Kiedy kodu nie ma, tytuł czyta model wizyjny (jeśli podałeś klucz) albo lokalny OCR.</p>
+<h3>Dlaczego wyniki są teraz trafniejsze</h3>
+<p>Tekst z jednej okładki jest najpierw grupowany przestrzennie — podtytuł, seria i poziom nauczania trafiają do tej samej książki co tytuł główny, zamiast tworzyć osobne, przypadkowe wyniki. Potem aplikacja pobiera z baz kilka kandydatów i porównuje ich okładki z wycinkiem z Twojego zdjęcia (jasność, układ i kolory). Wygrywa wydanie, które naprawdę wygląda jak książka na zdjęciu, a nie to, które przypadkiem ma podobny opis. Gdy nic nie pasuje pewnie, dostajesz listę propozycji do kliknięcia zamiast losowego trafienia.</p>
 <h3>Zdjęcie kilku książek naraz</h3>
 <p>Ustaw książki obok siebie albo sfotografuj półkę tak, żeby grzbiety były czytelne. Model wypisuje każdy tytuł osobno, wycina miniaturę z kadru i ocenia stan każdego egzemplarza. Wyceny lecą jedna pod drugą — stan każdej możesz poprawić ręcznie.</p>
 <h3>Ocena stanu</h3>
@@ -2080,6 +3003,8 @@ const HELP_HTML = `
 <p>Punktem wyjścia jest cena katalogowa nowego egzemplarza z Google Books. Gdy jej nie ma, aplikacja szacuje ją po objętości i tematyce. Potem mnoży przez współczynnik stanu, kanał sprzedaży i poprawki na wiek wydania, popularność tytułu oraz objętość.</p>
 <h3>Skróty klawiszowe</h3>
 <p><kbd>1</kbd>–<kbd>5</kbd> przełączają zakładki, <kbd>/</kbd> ustawia kursor w polu ISBN, <kbd>Ctrl</kbd>+<kbd>V</kbd> wkleja zdjęcie ze schowka, <kbd>Esc</kbd> zamyka okno.</p>
+<h3>Obsługiwane pliki</h3>
+<p>JPG, PNG, WEBP, AVIF, GIF, BMP, TIFF, HEIC/HEIF z iPhone'a oraz PDF (czytana jest pierwsza strona). Możesz wrzucić kilka zdjęć naraz — aplikacja przejdzie przez nie po kolei i pominie duplikaty.</p>
 <h3>Publikacja na GitHub Pages</h3>
 <p>Wrzuć ten plik do repozytorium jako <code>index.html</code>, w Settings → Pages wybierz gałąź <code>main</code> i katalog <code>/ (root)</code>. Strona nie potrzebuje żadnego backendu ani kroku budowania. Kamera i skaner wymagają HTTPS, które GitHub Pages daje automatycznie.</p>
 `;
@@ -2205,6 +3130,14 @@ function init(){
   }
   window.addEventListener('beforeunload', ()=>{ if(scanner) stopScanner(); });
 }
+
+/* uchwyt diagnostyczny — przydaje się do testów w konsoli przeglądarki */
+window.Kartoteka = {
+  version: VERSION, settings, PROVIDERS,
+  resolveSmart, findEditions, ocrBooks, clusterOcrLines, groupToCandidate,
+  isGenericText, textScoreFor, tokenOverlap, distinctWords, distinctCoverage, buildBookQueries,
+  signatureFromSource, sigSimilarity, detectBarcodes, buildCandidates, analyzePhoto
+};
 
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();
