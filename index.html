@@ -1215,6 +1215,68 @@ async function openLibrarySearch(title, author){
   return (d.docs && d.docs.length) ? d.docs : [];
 }
 
+   async function bnByIsbn(isbn){
+  if(!isbn) return null;
+  const clean = cleanIsbn(isbn);
+  try{
+    const d = await fetchJson('https://data.bn.org.pl/api/bibs.json?isbnIssn=' + encodeURIComponent(clean));
+    if(!d.bibs || !d.bibs.length) return null;
+    const b = d.bibs[0];
+    return {
+      isbn: clean,
+      title: b.title || 'Tytuł nieznany',
+      authors: b.author || 'Autor nieznany',
+      publisher: b.publisher || null,
+      year: parseYear(b.publicationYear),
+      pages: null,
+      language: 'pl',
+      categories: null,
+      ratingsCount: 0,
+      averageRating: null,
+      cover: 'https://covers.openlibrary.org/b/isbn/' + clean + '-L.jpg?default=false',
+      listPrice: null,
+      retailPrice: null,
+      infoLink: 'https://katalogi.bn.org.pl/',
+      source: 'Biblioteka Narodowa',
+      matchScore: 0
+    };
+  }catch(e){ return null; }
+}
+
+async function bnSearch(title, author){
+  if(!title) return [];
+  try{
+    const q = new URLSearchParams();
+    q.set('title', title);
+    if(author) q.set('author', author);
+    q.set('limit', '10');
+    const d = await fetchJson('https://data.bn.org.pl/api/bibs.json?' + q.toString());
+    if(!d.bibs || !d.bibs.length) return [];
+    return d.bibs.map(b=>{
+      const rawIsbn = b.isbnIssn ? cleanIsbn(b.isbnIssn.split(' ')[0]) : null;
+      const isbn = rawIsbn ? normalizeIsbn(rawIsbn) : null;
+      return {
+        isbn,
+        title: b.title || 'Tytuł nieznany',
+        authors: b.author || 'Autor nieznany',
+        publisher: b.publisher || null,
+        year: parseYear(b.publicationYear),
+        pages: null,
+        language: 'pl',
+        categories: null,
+        ratingsCount: 0,
+        averageRating: null,
+        cover: isbn ? ('https://covers.openlibrary.org/b/isbn/' + isbn + '-L.jpg?default=false') : null,
+        listPrice: null,
+        retailPrice: null,
+        infoLink: 'https://katalogi.bn.org.pl/',
+        source: 'Biblioteka Narodowa',
+        matchScore: 0
+      };
+    });
+  }catch(e){ return []; }
+}
+   
 function scoreVolume(item){
   const vi = item.volumeInfo||{}, si = item.saleInfo||{};
   let s = 0;
@@ -1337,9 +1399,10 @@ async function findEditions(q){
   };
 
   if(q.isbn){
-    const [gbRes, olRes] = await Promise.allSettled([
+    const [gbRes, olRes, bnRes] = await Promise.allSettled([
       googleBooks('isbn:' + q.isbn, 5),
-      openLibraryByIsbn(q.isbn)
+      openLibraryByIsbn(q.isbn),
+      bnByIsbn(q.isbn)
     ]);
     const ol = olRes.status === 'fulfilled' ? olRes.value : null;
     if(gbRes.status === 'fulfilled' && gbRes.value.length){
@@ -1348,6 +1411,8 @@ async function findEditions(q){
       push(m, 1);
     } else if(ol){
       push(metaFromOlData(ol, q.isbn), 1);
+    } else if(bnRes.status === 'fulfilled' && bnRes.value){
+      push(bnRes.value, 1);
     }
     if(out.length) return out;      // ISBN jest pewny, nie ma co dalej szukać
   }
@@ -1355,9 +1420,10 @@ async function findEditions(q){
   const queries = buildBookQueries(q.title, q.author, q.text);
   if(!queries.length) return out;
 
-  const [googleRuns, libraryRun] = await Promise.all([
+  const [googleRuns, libraryRun, bnRun] = await Promise.all([
     Promise.allSettled(queries.map(s=>googleBooks(s, 20))),
-    openLibrarySearch(q.title || (distinctWords(q.text||'').slice(0,5).join(' ')), q.author).catch(()=>[])
+    openLibrarySearch(q.title || (distinctWords(q.text||'').slice(0,5).join(' ')), q.author).catch(()=>[]),
+    bnSearch(q.title, q.author).catch(()=>[])
   ]);
   googleRuns.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).forEach(item=>{
     const meta = metaFromGoogle(item, null);
@@ -1366,6 +1432,9 @@ async function findEditions(q){
   (libraryRun || []).forEach(doc=>{
     const meta = metaFromOpenLibrary(doc);
     push(meta, textScoreFor(meta, q));
+  });
+  (bnRun || []).forEach(meta=>{
+    push(meta, textScoreFor(meta, q) + 0.05);
   });
 
   out.sort((a,b)=>b.textScore-a.textScore);
