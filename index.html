@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Kartoteka - wyceniaj książki ze zdjęcia okładki, ze zdjęcia całej półki albo po numerze ISBN.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1F4D3D">
+<title>Kartoteka — wycena książek ze zdjęcia i po ISBN</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js" defer></script>
+
+<style>
+/* ============================================================
+   TOKENY
+   ============================================================ */
+:root{
+  --paper:#F4F0E6;
+  --surface:#FBF9F3;
+  --surface-2:#EFEADC;
+  --ink:#1B1E24;
+  --ink-2:#585E68;
+  --ink-3:#8A8F98;
+  --line:#DBD3C1;
+  --line-strong:#C3B79C;
+  --green:#1F4D3D;
+  --green-2:#2E6E56;
+  --green-soft:#E4EDE8;
+  --ox:#8A2B2B;
+  --brass:#9A7226;
+  --brass-soft:#F3E9D2;
+  --ok:#2E6E56;
+  --warn:#9A6B15;
+  --err:#96302A;
+  --shadow:0 1px 2px rgba(27,30,36,.06), 0 10px 30px rgba(27,30,36,.07);
+  --radius:10px;
+  --radius-sm:7px;
+  --maxw:980px;
+  --serif:'Spectral', Georgia, 'Times New Roman', serif;
+  --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+}
+:root[data-theme="dark"]{
+  --paper:#14171B;
+  --surface:#1B1F25;
+  --surface-2:#232830;
+  --ink:#E9E6DE;
+  --ink-2:#A2A8B1;
+  --ink-3:#767C86;
+  --line:#2C323A;
+  --line-strong:#3D444E;
+  --green:#5FB294;
+  --green-2:#79C6A9;
+  --green-soft:#1D2C27;
+  --ox:#D98079;
+  --brass:#D6A94E;
+  --brass-soft:#2A2418;
+  --ok:#5FB294;
+  --warn:#D6A94E;
+  --err:#E0837B;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root[data-theme="auto"]{
+    --paper:#14171B; --surface:#1B1F25; --surface-2:#232830;
+    --ink:#E9E6DE; --ink-2:#A2A8B1; --ink-3:#767C86;
+    --line:#2C323A; --line-strong:#3D444E;
+    --green:#5FB294; --green-2:#79C6A9; --green-soft:#1D2C27;
+    --ox:#D98079; --brass:#D6A94E; --brass-soft:#2A2418;
+    --ok:#5FB294; --warn:#D6A94E; --err:#E0837B;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+  }
+}
+
+/* ============================================================
+   BAZA
+   ============================================================ */
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.55;
+  min-height:100dvh;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+h1,h2,h3{font-family:var(--serif); font-weight:600; letter-spacing:-.01em; margin:0;}
+a{color:var(--green); text-decoration-thickness:1px; text-underline-offset:3px;}
+:focus-visible{outline:2.5px solid var(--brass); outline-offset:2px; border-radius:4px;}
+::selection{background:var(--brass-soft); color:var(--ink);}
+img{max-width:100%;}
+
+/* ============================================================
+   NAGŁÓWEK + NAWIGACJA
+   ============================================================ */
+.topbar{
+  position:sticky; top:0; z-index:40;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:var(--maxw); margin:0 auto;
+  padding:12px 16px 0;
+  display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+}
+.wordmark{
+  font-family:var(--serif); font-size:25px; font-weight:700;
+  line-height:1.1; margin:0;
+}
+.wordmark span{color:var(--green);}
+.tagline{color:var(--ink-2); font-size:13.5px; flex:1 1 200px;}
+.topbar-actions{display:flex; gap:6px; margin-left:auto;}
+.icon-btn{
+  background:transparent; border:1px solid var(--line); color:var(--ink-2);
+  width:34px; height:34px; border-radius:var(--radius-sm);
+  font-size:15px; cursor:pointer; display:grid; place-items:center;
+  transition:border-color .15s, color .15s, background .15s;
+}
+.icon-btn:hover{border-color:var(--line-strong); color:var(--ink); background:var(--surface);}
+
+nav.tabs{
+  max-width:var(--maxw); margin:0 auto;
+  padding:10px 16px 0;
+  display:flex; gap:2px; overflow-x:auto; scrollbar-width:none;
+}
+nav.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  appearance:none; background:transparent; border:0;
+  border-bottom:2.5px solid transparent;
+  padding:9px 13px 11px; cursor:pointer; white-space:nowrap;
+  font-family:var(--sans); font-size:14.5px; font-weight:500; color:var(--ink-2);
+  transition:color .15s, border-color .15s;
+}
+.tab:hover{color:var(--ink);}
+.tab[aria-selected="true"]{color:var(--green); border-bottom-color:var(--green); font-weight:600;}
+.tab .badge{
+  display:inline-block; min-width:18px; padding:0 5px; margin-left:6px;
+  background:var(--surface-2); color:var(--ink-2);
+  border-radius:9px; font-family:var(--mono); font-size:11px; line-height:18px;
+}
+.tab[aria-selected="true"] .badge{background:var(--green); color:var(--surface);}
+
+/* ============================================================
+   UKŁAD
+   ============================================================ */
+main{max-width:var(--maxw); margin:0 auto; padding:22px 16px 80px;}
+.panel[hidden]{display:none;}
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:20px;
+  margin-bottom:18px;
+}
+.card h2{font-size:20px; margin-bottom:4px;}
+.card > .lede{color:var(--ink-2); font-size:14px; margin:0 0 16px;}
+.row{display:flex; gap:10px; flex-wrap:wrap;}
+.grow{flex:1 1 220px; min-width:0;}
+.hint{color:var(--ink-3); font-size:12.5px; margin:10px 0 0;}
+hr.rule{border:0; border-top:1px solid var(--line); margin:18px 0;}
+
+/* ============================================================
+   FORMULARZE I PRZYCISKI
+   ============================================================ */
+input[type=text], input[type=password], input[type=search], input[type=number], select, textarea{
+  width:100%; padding:11px 13px;
+  font-family:var(--sans); font-size:15.5px; color:var(--ink);
+  background:var(--paper);
+  border:1.5px solid var(--line); border-radius:var(--radius-sm);
+  transition:border-color .15s, box-shadow .15s;
+}
+input.mono{font-family:var(--mono); letter-spacing:.06em;}
+input:focus, select:focus, textarea:focus{
+  outline:none; border-color:var(--green);
+  box-shadow:0 0 0 3px color-mix(in srgb, var(--green) 18%, transparent);
+}
+label.field{display:block; margin-bottom:12px;}
+label.field > span{display:block; font-size:13px; font-weight:500; color:var(--ink-2); margin-bottom:5px;}
+
+button{font-family:var(--sans);}
+.btn{
+  appearance:none; cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:11px 18px; font-size:15px; font-weight:600;
+  background:var(--green); color:#FBF9F3; border:1.5px solid var(--green);
+  border-radius:var(--radius-sm);
+  transition:background .15s, transform .06s, opacity .15s;
+}
+:root[data-theme="dark"] .btn{color:#0F1317;}
+@media (prefers-color-scheme: dark){:root[data-theme="auto"] .btn{color:#0F1317;}}
+.btn:hover{background:var(--green-2); border-color:var(--green-2);}
+.btn:active{transform:translateY(1px);}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--line-strong);}
+.btn.ghost:hover{background:var(--surface-2); border-color:var(--ink-3);}
+.btn.danger{background:transparent; color:var(--err); border-color:color-mix(in srgb, var(--err) 45%, transparent);}
+.btn.danger:hover{background:color-mix(in srgb, var(--err) 12%, transparent);}
+.btn.small{padding:7px 12px; font-size:13.5px; font-weight:500;}
+
+/* ============================================================
+   DROPZONE
+   ============================================================ */
+.dropzone{
+  border:2px dashed var(--line-strong);
+  border-radius:var(--radius);
+  background:var(--paper);
+  padding:34px 20px;
+  text-align:center;
+  transition:border-color .18s, background .18s;
+  cursor:pointer;
+}
+.dropzone:hover{border-color:var(--green); background:var(--green-soft);}
+.dropzone.dragging{border-color:var(--green); background:var(--green-soft); border-style:solid;}
+.dropzone .dz-title{font-family:var(--serif); font-size:19px; font-weight:600; margin:0 0 6px;}
+.dropzone .dz-sub{color:var(--ink-2); font-size:14px; margin:0;}
+.dz-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;}
+.preview-wrap{position:relative; margin-top:16px; display:none;}
+.preview-wrap.active{display:block;}
+.preview-wrap img{
+  width:100%; max-height:340px; object-fit:contain;
+  border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--surface-2);
+}
+.preview-bar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px;}
+
+/* ============================================================
+   PASEK POSTĘPU / STATUSY
+   ============================================================ */
+.progress{
+  height:4px; background:var(--surface-2); border-radius:3px; overflow:hidden;
+  margin:14px 0 8px; display:none;
+}
+.progress.active{display:block;}
+.progress i{
+  display:block; height:100%; width:30%; background:var(--green);
+  border-radius:3px; animation:slide 1.1s ease-in-out infinite;
+}
+@keyframes slide{0%{margin-left:-30%;}100%{margin-left:100%;}}
+@media (prefers-reduced-motion:reduce){.progress i{animation:none; width:100%;}}
+
+.status{font-size:14px; margin:10px 0 0; min-height:20px; color:var(--ink-2);}
+.status.err{color:var(--err); font-weight:500;}
+.status.ok{color:var(--ok);}
+
+.notice{
+  border-left:3px solid var(--brass);
+  background:var(--brass-soft);
+  padding:11px 14px; border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  font-size:13.5px; color:var(--ink-2); margin:14px 0 0;
+}
+.notice strong{color:var(--ink);}
+
+/* ============================================================
+   KARTA KSIĄŻKI (WYNIK)
+   ============================================================ */
+.results{margin-top:6px;}
+.book{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-left:3px solid var(--brass);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+  margin-bottom:14px;
+}
+.book.pending{border-left-color:var(--line-strong); opacity:.75;}
+.book.failed{border-left-color:var(--err);}
+.book-head{display:flex; gap:15px; align-items:flex-start;}
+.book-cover{
+  width:74px; height:110px; flex:0 0 74px;
+  object-fit:cover; background:var(--surface-2);
+  border:1px solid var(--line); border-radius:4px;
+}
+.book-cover.placeholder{
+  display:grid; place-items:center; font-family:var(--serif);
+  color:var(--ink-3); font-size:26px;
+}
+.book-title{font-size:18px; line-height:1.3; margin:0 0 3px;}
+.book-author{color:var(--ink-2); font-size:14.5px; font-style:italic; margin:0 0 7px;}
+.book-meta{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); line-height:1.7; margin:0;}
+.book-meta b{color:var(--ink-2); font-weight:500;}
+
+.chips{display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 0;}
+.chip{
+  font-size:11.5px; font-family:var(--mono);
+  padding:3px 8px; border-radius:20px;
+  border:1px solid var(--line-strong); color:var(--ink-2); background:var(--paper);
+}
+.chip.ai{border-color:var(--green); color:var(--green); background:var(--green-soft);}
+.chip.scan{border-color:var(--brass); color:var(--brass); background:var(--brass-soft);}
+
+/* stan egzemplarza */
+.cond-label{font-size:13px; font-weight:600; color:var(--ink-2); margin:16px 0 7px;}
+.cond-row{display:grid; grid-template-columns:repeat(5,1fr); gap:6px;}
+.cond-btn{
+  appearance:none; cursor:pointer;
+  background:var(--paper); border:1.5px solid var(--line);
+  border-radius:var(--radius-sm); padding:8px 4px;
+  font-size:12px; font-weight:600; color:var(--ink-2); line-height:1.35;
+  transition:border-color .13s, background .13s, color .13s;
+}
+.cond-btn small{display:block; font-weight:400; font-size:10.5px; color:var(--ink-3); margin-top:2px;}
+.cond-btn:hover{border-color:var(--line-strong);}
+.cond-btn[aria-pressed="true"]{
+  background:var(--green); border-color:var(--green); color:#FBF9F3;
+}
+:root[data-theme="dark"] .cond-btn[aria-pressed="true"]{color:#0F1317;}
+@media (prefers-color-scheme:dark){:root[data-theme="auto"] .cond-btn[aria-pressed="true"]{color:#0F1317;}}
+.cond-btn[aria-pressed="true"] small{color:inherit; opacity:.8;}
+
+.ai-note{
+  font-size:13px; color:var(--ink-2); margin:10px 0 0;
+  padding-left:11px; border-left:2px solid var(--line-strong);
+}
+
+/* wycena */
+.valuation{
+  margin-top:16px; padding:14px 16px;
+  background:var(--green-soft); border-radius:var(--radius-sm);
+  display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+}
+.val-main{display:flex; align-items:baseline; gap:8px;}
+.val-num{font-family:var(--mono); font-size:27px; font-weight:600; color:var(--green); letter-spacing:-.02em;}
+.val-dash{color:var(--ink-3); font-size:19px;}
+.val-cur{font-family:var(--mono); font-size:13px; color:var(--ink-2); align-self:flex-end; padding-bottom:4px;}
+.val-side{font-size:13px; color:var(--ink-2); line-height:1.5;}
+.val-side b{font-family:var(--mono); color:var(--ink); font-weight:600;}
+.val-basis{font-size:12.5px; color:var(--ink-3); margin:9px 0 0; line-height:1.6;}
+
+.book-actions{display:flex; gap:7px; flex-wrap:wrap; margin-top:14px;}
+.market-links{display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:13px;}
+.market-links a{color:var(--ink-2);}
+.market-links a:hover{color:var(--green);}
+
+/* ============================================================
+   KARTOTEKA / HISTORIA
+   ============================================================ */
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-bottom:16px;}
+.stat{
+  background:var(--paper); border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:12px 14px;
+}
+.stat .v{font-family:var(--mono); font-size:21px; font-weight:600; color:var(--ink); display:block; line-height:1.2;}
+.stat .k{font-size:12px; color:var(--ink-3);}
+
+.toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px;}
+.toolbar .grow{flex:1 1 180px;}
+select.compact{width:auto; padding:9px 11px; font-size:14px;}
+
+.hist-item{
+  display:flex; gap:12px; align-items:center;
+  padding:11px 12px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  background:var(--paper); margin-bottom:8px;
+}
+.hist-item.sold{opacity:.62;}
+.hist-item.sold .hist-title{text-decoration:line-through;}
+.hist-thumb{
+  width:38px; height:54px; flex:0 0 38px; object-fit:cover;
+  border-radius:3px; background:var(--surface-2); border:1px solid var(--line);
+}
+.hist-body{flex:1 1 auto; min-width:0;}
+.hist-title{font-family:var(--serif); font-size:15.5px; font-weight:600; display:block;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hist-sub{font-size:12px; color:var(--ink-3); font-family:var(--mono);
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hist-price{font-family:var(--mono); font-size:14px; font-weight:600; color:var(--green); white-space:nowrap;}
+.hist-tools{display:flex; gap:4px;}
+.hist-tools button{
+  background:transparent; border:1px solid transparent; color:var(--ink-3);
+  cursor:pointer; padding:5px 7px; border-radius:5px; font-size:14px; line-height:1;
+}
+.hist-tools button:hover{background:var(--surface-2); color:var(--ink);}
+.empty{
+  text-align:center; padding:34px 20px; color:var(--ink-3);
+  border:1px dashed var(--line-strong); border-radius:var(--radius-sm);
+}
+.empty p{margin:0 0 4px;}
+.empty .big{font-family:var(--serif); font-size:17px; color:var(--ink-2);}
+
+/* ============================================================
+   SKANER
+   ============================================================ */
+#reader{
+  display:none; margin-top:14px; border-radius:var(--radius-sm);
+  overflow:hidden; border:1px solid var(--line); background:#000;
+}
+#reader.active{display:block;}
+#reader video{width:100% !important; display:block;}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.overlay{
+  position:fixed; inset:0; z-index:100;
+  background:rgba(20,23,27,.55); backdrop-filter:blur(3px);
+  display:none; align-items:flex-start; justify-content:center;
+  padding:24px 14px; overflow-y:auto;
+}
+.overlay.active{display:flex;}
+.modal{
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius); max-width:720px; width:100%;
+  padding:26px 26px 32px; box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.modal h2{font-size:23px; margin-bottom:4px;}
+.modal h3{font-family:var(--sans); font-size:15px; font-weight:600; margin:22px 0 6px;}
+.modal p, .modal li{font-size:14px; color:var(--ink-2); line-height:1.65;}
+.modal-close{
+  float:right; background:transparent; border:1px solid var(--line);
+  border-radius:var(--radius-sm); padding:6px 11px; cursor:pointer;
+  color:var(--ink-2); font-size:13px;
+}
+table.data{width:100%; border-collapse:collapse; margin:10px 0 4px; font-size:13px;}
+table.data th, table.data td{
+  text-align:left; padding:7px 8px; border-bottom:1px solid var(--line);
+  vertical-align:top; color:var(--ink-2);
+}
+table.data th{font-size:11.5px; font-weight:600; color:var(--ink); letter-spacing:.02em;}
+
+/* ============================================================
+   TOASTY
+   ============================================================ */
+#toasts{
+  position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(18px + env(safe-area-inset-bottom)); z-index:200;
+  display:flex; flex-direction:column; gap:8px; align-items:center;
+  pointer-events:none; width:min(92vw,420px);
+}
+.toast{
+  background:var(--ink); color:var(--paper);
+  padding:10px 16px; border-radius:22px; font-size:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+  animation:pop .22s ease-out;
+}
+@keyframes pop{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none;}}
+
+footer{
+  max-width:var(--maxw); margin:0 auto; padding:0 16px 40px;
+  color:var(--ink-3); font-size:12.5px; line-height:1.7; text-align:center;
+}
+footer a{color:var(--ink-2);}
+kbd{
+  font-family:var(--mono); font-size:11px; padding:1px 5px;
+  border:1px solid var(--line-strong); border-bottom-width:2px;
+  border-radius:4px; background:var(--paper); color:var(--ink-2);
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ + DRUK
+   ============================================================ */
+@media (max-width:560px){
+  .card{padding:16px 15px;}
+  .cond-row{grid-template-columns:repeat(3,1fr);}
+  .book-cover{width:60px; height:90px; flex-basis:60px;}
+  .val-num{font-size:23px;}
+  .wordmark{font-size:22px;}
+}
+@media print{
+  .topbar, nav.tabs, .book-actions, .toolbar, .dropzone, .preview-wrap,
+  .market-links, #toasts, footer .noprint, .icon-btn{display:none !important;}
+  body{background:#fff;}
+  .card, .book{box-shadow:none; break-inside:avoid;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <h1 class="wordmark">Karto<span>teka</span></h1>
+    <p class="tagline">Wyceniaj książki ze zdjęcia okładki, ze zdjęcia całej półki albo po numerze ISBN.</p>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="themeBtn" title="Motyw jasny / ciemny" aria-label="Zmień motyw">◐</button>
+      <button class="icon-btn" id="helpBtn" title="Jak to działa" aria-label="Pomoc">?</button>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sekcje aplikacji">
+    <button class="tab" role="tab" id="tab-photo"    aria-controls="panel-photo"    aria-selected="true">Zdjęcie książek</button>
+    <button class="tab" role="tab" id="tab-isbn"     aria-controls="panel-isbn"     aria-selected="false">Numer ISBN</button>
+    <button class="tab" role="tab" id="tab-scan"     aria-controls="panel-scan"     aria-selected="false">Skaner kodu</button>
+    <button class="tab" role="tab" id="tab-shelf"    aria-controls="panel-shelf"    aria-selected="false">Moja kartoteka <span class="badge" id="histBadge">0</span></button>
+    <button class="tab" role="tab" id="tab-settings" aria-controls="panel-settings" aria-selected="false">Ustawienia</button>
+  </nav>
+</div>
+
+<main>
+
+  <!-- ===================== ZDJĘCIE ===================== -->
+  <section class="panel" id="panel-photo" role="tabpanel" aria-labelledby="tab-photo">
+    <div class="card">
+      <h2>Wrzuć zdjęcie</h2>
+      <p class="lede">Jedna okładka albo cała półka na jednym kadrze — aplikacja rozpozna każdy tytuł po kolei, oceni stan egzemplarza i policzy widełki.</p>
+
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Wybierz zdjęcie książek">
+        <p class="dz-title">Przeciągnij zdjęcie tutaj</p>
+        <p class="dz-sub">albo wklej ze schowka (<kbd>Ctrl</kbd>+<kbd>V</kbd>), wybierz plik lub zrób zdjęcie aparatem</p>
+        <div class="dz-actions">
+          <button class="btn ghost small" id="pickFileBtn" type="button">Wybierz plik</button>
+          <button class="btn ghost small" id="pickCamBtn" type="button">Zrób zdjęcie</button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" hidden multiple>
+      <input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+
+      <div class="preview-wrap" id="previewWrap">
+        <img id="preview" alt="Podgląd wrzuconego zdjęcia">
+        <div class="preview-bar">
+          <button class="btn" id="analyzeBtn" type="button">Rozpoznaj i wyceń</button>
+          <button class="btn ghost small" id="clearImgBtn" type="button">Usuń zdjęcie</button>
+          <span class="hint" id="imgInfo" style="margin:0;"></span>
+        </div>
+      </div>
+
+      <div class="progress" id="photoProgress"><i></i></div>
+      <p class="status" id="photoStatus" role="status" aria-live="polite"></p>
+
+      <div class="notice" id="noKeyNotice">
+        <strong>Bez klucza API też działa.</strong> Aplikacja najpierw szuka kodów kreskowych EAN na zdjęciu, a jeśli ich nie widać — czyta tytuł z okładki (OCR). Pełne rozpoznanie wielu książek naraz i ocena stanu okładki wymagają klucza do modelu wizyjnego — wklej go w <a href="#" data-goto="settings">Ustawieniach</a>.
+      </div>
+    </div>
+
+    <div class="results" id="photoResults"></div>
+  </section>
+
+  <!-- ===================== ISBN ===================== -->
+  <section class="panel" id="panel-isbn" role="tabpanel" aria-labelledby="tab-isbn" hidden>
+    <div class="card">
+      <h2>Wpisz numer ISBN</h2>
+      <p class="lede">Dziesięć albo trzynaście znaków z okładki lub strony redakcyjnej. Myślniki i spacje możesz pominąć.</p>
+      <div class="row">
+        <input type="text" class="mono grow" id="isbnInput" placeholder="9788328712345" inputmode="numeric" autocomplete="off" aria-label="Numer ISBN">
+        <button class="btn" id="isbnBtn" type="button">Wyceń</button>
+      </div>
+      <p class="hint">Możesz też wkleić kilka numerów naraz, oddzielonych przecinkiem lub enterem — policzę je jeden po drugim.</p>
+      <div class="progress" id="isbnProgress"><i></i></div>
+      <p class="status" id="isbnStatus" role="status" aria-live="polite"></p>
+    </div>
+    <div class="results" id="isbnResults"></div>
+  </section>
+
+  <!-- ===================== SKANER ===================== -->
+  <section class="panel" id="panel-scan" role="tabpanel" aria-labelledby="tab-scan" hidden>
+    <div class="card">
+      <h2>Skanuj kod kreskowy</h2>
+      <p class="lede">Wyceluj tylnią okładkę w kamerę. Kod EAN-13 zaczynający się od 978 lub 979 to ten sam numer co ISBN.</p>
+      <div class="row">
+        <button class="btn" id="scanBtn" type="button">Włącz kamerę</button>
+        <button class="btn ghost" id="switchCamBtn" type="button" hidden>Zmień kamerę</button>
+      </div>
+      <div id="reader"></div>
+      <p class="status" id="scanStatus" role="status" aria-live="polite"></p>
+      <p class="hint">Kamera działa tylko przez HTTPS — na GitHub Pages jest włączone domyślnie. Skanowanie seryjne: po każdym trafieniu kamera pracuje dalej, więc możesz przekładać książki jedna po drugiej.</p>
+    </div>
+    <div class="results" id="scanResults"></div>
+  </section>
+
+  <!-- ===================== KARTOTEKA ===================== -->
+  <section class="panel" id="panel-shelf" role="tabpanel" aria-labelledby="tab-shelf" hidden>
+    <div class="card">
+      <h2>Moja kartoteka</h2>
+      <p class="lede">Wszystko, co wyceniłeś, zapisuje się w tej przeglądarce i zostaje po zamknięciu karty.</p>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="toolbar">
+        <input type="search" class="grow" id="histSearch" placeholder="Szukaj po tytule, autorze lub ISBN" aria-label="Szukaj w kartotece">
+        <select class="compact" id="histSort" aria-label="Sortowanie">
+          <option value="new">Od najnowszych</option>
+          <option value="old">Od najstarszych</option>
+          <option value="price-desc">Najdroższe</option>
+          <option value="price-asc">Najtańsze</option>
+          <option value="title">Alfabetycznie</option>
+        </select>
+        <select class="compact" id="histFilter" aria-label="Filtr">
+          <option value="all">Wszystkie</option>
+          <option value="active">Na sprzedaż</option>
+          <option value="sold">Sprzedane</option>
+        </select>
+      </div>
+
+      <div id="histList"></div>
+
+      <hr class="rule">
+      <div class="row">
+        <button class="btn ghost small" id="exportCsvBtn" type="button">Pobierz CSV</button>
+        <button class="btn ghost small" id="exportJsonBtn" type="button">Kopia zapasowa JSON</button>
+        <button class="btn ghost small" id="importJsonBtn" type="button">Wczytaj kopię</button>
+        <button class="btn ghost small" id="printBtn" type="button">Drukuj spis</button>
+        <button class="btn danger small" id="clearHistBtn" type="button">Wyczyść kartotekę</button>
+      </div>
+      <input type="file" id="importInput" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- ===================== USTAWIENIA ===================== -->
+  <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="card">
+      <h2>Rozpoznawanie zdjęć</h2>
+      <p class="lede">Zdjęcia analizuje model wizyjny wybranego dostawcy. Klucz zostaje w Twojej przeglądarce i leci wyłącznie do tego dostawcy — nie ma tu serwera pośredniczącego.</p>
+
+      <label class="field">
+        <span>Dostawca modelu</span>
+        <select id="providerSel">
+          <option value="gemini">Google Gemini — darmowy limit, najprostszy start</option>
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openrouter">OpenRouter</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Klucz API</span>
+        <input type="password" id="apiKeyInput" class="mono" placeholder="wklej klucz" autocomplete="off" spellcheck="false">
+      </label>
+
+      <label class="field">
+        <span>Model</span>
+        <input type="text" id="modelInput" class="mono" placeholder="np. gemini-2.0-flash" autocomplete="off">
+      </label>
+
+      <div class="row">
+        <button class="btn" id="saveKeyBtn" type="button">Zapisz i sprawdź połączenie</button>
+        <button class="btn ghost" id="clearKeyBtn" type="button">Usuń klucz z przeglądarki</button>
+      </div>
+      <p class="status" id="keyStatus" role="status" aria-live="polite"></p>
+
+      <div class="notice">
+        <strong>Gdzie wziąć klucz:</strong> Gemini — aistudio.google.com/apikey, OpenAI — platform.openai.com/api-keys,
+        Anthropic — console.anthropic.com, OpenRouter — openrouter.ai/keys.
+        Klucz wklejony na stronie publicznej może zostać odczytany przez kogoś, kto ma dostęp do tego urządzenia, więc ustaw sobie limit wydatków u dostawcy.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Wycena</h2>
+      <label class="field">
+        <span>Waluta wyników</span>
+        <select id="currencySel">
+          <option value="PLN">złoty (PLN)</option>
+          <option value="EUR">euro (EUR)</option>
+          <option value="USD">dolar (USD)</option>
+          <option value="GBP">funt (GBP)</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Kanał sprzedaży — wpływa na poziom cen</span>
+        <select id="channelSel">
+          <option value="allegro">Allegro / OLX — sprzedaż prywatna</option>
+          <option value="antykwariat">Skup do antykwariatu — cena, jaką Ci zapłacą</option>
+          <option value="kolekcja">Wartość kolekcjonerska — górna półka rynku</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Domyślny stan egzemplarza, gdy model nie potrafi go ocenić</span>
+        <select id="defCondSel">
+          <option value="bdb">Bardzo dobry</option>
+          <option value="dobry" selected>Dobry</option>
+          <option value="dost">Dostateczny</option>
+        </select>
+      </label>
+      <label class="field" style="display:flex; gap:9px; align-items:center;">
+        <input type="checkbox" id="autoSaveChk" style="width:auto;" checked>
+        <span style="margin:0;">Zapisuj każdą wycenę do kartoteki automatycznie</span>
+      </label>
+      <label class="field" style="display:flex; gap:9px; align-items:center;">
+        <input type="checkbox" id="soundChk" style="width:auto;" checked>
+        <span style="margin:0;">Dźwięk i wibracja po trafionym skanie</span>
+      </label>
+      <p class="status" id="fxStatus"></p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Dane bibliograficzne: Google Books i Open Library. Kursy walut: Frankfurter (EBC).<br>
+  Widełki to szacunek na podstawie ceny katalogowej, stanu egzemplarza i typowych spadków wartości na rynku wtórnym. Nie zastępują wyceny rzeczoznawcy ani realnej oferty.</p>
+  <p class="noprint"><a href="#" id="openPrivacy">Polityka prywatności</a> · <a href="#" id="openHelp">Jak to działa</a> · <span id="versionTag" class="mono"></span></p>
+</footer>
+
+<div class="overlay" id="privacyOverlay" role="dialog" aria-modal="true" aria-label="Polityka prywatności">
+  <div class="modal" id="privacyModal"></div>
+</div>
+<div class="overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-label="Jak to działa">
+  <div class="modal" id="helpModal"></div>
+</div>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+/* ============================================================
+   KARTOTEKA — aplikacja jednoplikowa, działa statycznie (GitHub Pages)
+   ============================================================ */
+(function(){
+'use strict';
+
+const VERSION = '2.0';
+const LS = {
+  hist:'kartoteka.history.v2',
+  set:'kartoteka.settings.v2',
+  key:'kartoteka.apikey.v2',
+  cache:'kartoteka.cache.v2'
+};
+
+/* ---------- drobne narzędzia ---------- */
+const $  = (s, r) => (r||document).querySelector(s);
+const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+const esc = s => { const d=document.createElement('div'); d.textContent = s==null?'':String(s); return d.innerHTML; };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const uid = () => Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+
+function readLS(k, fallback){
+  try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function writeLS(k, v){
+  try{ localStorage.setItem(k, JSON.stringify(v)); return true; }
+  catch(e){ toast('Brak miejsca w pamięci przeglądarki'); return false; }
+}
+
+function toast(msg){
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity .3s'; }, 2600);
+  setTimeout(()=>el.remove(), 3000);
+}
+
+function beep(){
+  if(!settings.sound) return;
+  try{
+    if(navigator.vibrate) navigator.vibrate(60);
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='sine'; o.frequency.value=880;
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.16);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime+0.17);
+    setTimeout(()=>ctx.close(), 400);
+  }catch(e){}
+}
+
+/* ---------- ustawienia ---------- */
+const DEFAULT_SETTINGS = {
+  provider:'gemini',
+  model:'',
+  currency:'PLN',
+  channel:'allegro',
+  defCond:'dobry',
+  autoSave:true,
+  sound:true,
+  theme:'auto'
+};
+let settings = Object.assign({}, DEFAULT_SETTINGS, readLS(LS.set, {}));
+function saveSettings(){ writeLS(LS.set, settings); }
+
+const DEFAULT_MODELS = {
+  gemini:'gemini-2.0-flash',
+  openai:'gpt-4o-mini',
+  anthropic:'claude-sonnet-4-5-20250929',
+  openrouter:'google/gemini-2.0-flash-001'
+};
+function getApiKey(){ try{ return localStorage.getItem(LS.key) || ''; }catch(e){ return ''; } }
+function setApiKey(v){ try{ v ? localStorage.setItem(LS.key, v) : localStorage.removeItem(LS.key); }catch(e){} }
+function activeModel(){ return settings.model || DEFAULT_MODELS[settings.provider]; }
+function hasVision(){ return !!getApiKey(); }
+
+/* ---------- motyw ---------- */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  const map = {auto:'◐', light:'☀', dark:'☾'};
+  $('#themeBtn').textContent = map[settings.theme];
+  $('#themeBtn').title = 'Motyw: ' + ({auto:'automatyczny', light:'jasny', dark:'ciemny'})[settings.theme];
+}
+$('#themeBtn').addEventListener('click', ()=>{
+  const order = ['auto','light','dark'];
+  settings.theme = order[(order.indexOf(settings.theme)+1) % 3];
+  saveSettings(); applyTheme();
+});
+
+/* ---------- zakładki ---------- */
+const PANELS = ['photo','isbn','scan','shelf','settings'];
+function goTab(name){
+  PANELS.forEach(p=>{
+    const tab = $('#tab-'+p), panel = $('#panel-'+p);
+    const on = p === name;
+    tab.setAttribute('aria-selected', on ? 'true':'false');
+    panel.hidden = !on;
+  });
+  if(name !== 'scan') stopScanner();
+  try{ history.replaceState(null,'','#'+name); }catch(e){}
+  window.scrollTo({top:0, behavior:'instant'});
+}
+PANELS.forEach(p=> $('#tab-'+p).addEventListener('click', ()=>goTab(p)) );
+document.addEventListener('click', e=>{
+  const g = e.target.closest('[data-goto]');
+  if(g){ e.preventDefault(); goTab(g.dataset.goto); }
+});
+
+/* ---------- ISBN: walidacja i normalizacja ---------- */
+function cleanIsbn(v){ return String(v||'').replace(/[^0-9Xx]/g,'').toUpperCase(); }
+
+function isValidIsbn10(s){
+  if(!/^[0-9]{9}[0-9X]$/.test(s)) return false;
+  let sum = 0;
+  for(let i=0;i<9;i++) sum += (i+1) * Number(s[i]);
+  sum += 10 * (s[9]==='X' ? 10 : Number(s[9]));
+  return sum % 11 === 0;
+}
+function isValidIsbn13(s){
+  if(!/^[0-9]{13}$/.test(s)) return false;
+  let sum = 0;
+  for(let i=0;i<13;i++) sum += Number(s[i]) * (i%2 ? 3 : 1);
+  return sum % 10 === 0;
+}
+function isbn10to13(s){
+  const core = '978' + s.slice(0,9);
+  let sum = 0;
+  for(let i=0;i<12;i++) sum += Number(core[i]) * (i%2 ? 3 : 1);
+  return core + String((10 - sum%10) % 10);
+}
+function normalizeIsbn(raw){
+  const s = cleanIsbn(raw);
+  if(isValidIsbn13(s)) return s;
+  if(isValidIsbn10(s)) return isbn10to13(s);
+  if(/^[0-9]{13}$/.test(s) && /^97[89]/.test(s)) return s; // kod z lekkim błędem odczytu — próbujemy
+  if(/^[0-9]{10}$/.test(s)) return isbn10to13(s);
+  return null;
+}
+
+/* ---------- kursy walut ---------- */
+const FX_FALLBACK = {PLN:1, USD:4.05, EUR:4.30, GBP:5.10, CHF:4.55, CZK:0.175, SEK:0.38, CAD:2.95, AUD:2.70, JPY:0.027};
+let fxRates = Object.assign({}, FX_FALLBACK);
+let fxLoaded = false;
+
+async function loadFx(){
+  try{
+    const r = await fetch('https://api.frankfurter.app/latest?from=PLN&to=USD,EUR,GBP,CHF,CZK,SEK,CAD,AUD,JPY');
+    if(!r.ok) throw 0;
+    const d = await r.json();
+    Object.keys(d.rates).forEach(c=>{ fxRates[c] = 1 / d.rates[c]; });
+    fxRates.PLN = 1;
+    fxLoaded = true;
+    const el = $('#fxStatus');
+    if(el) el.textContent = 'Kursy walut z dnia ' + d.date + '.';
+  }catch(e){
+    const el = $('#fxStatus');
+    if(el) el.textContent = 'Nie udało się pobrać kursów — używam wartości przybliżonych.';
+  }
+}
+function toPln(amount, cur){
+  const rate = fxRates[(cur||'PLN').toUpperCase()];
+  return amount * (rate || 1);
+}
+function fromPln(amountPln){
+  const cur = settings.currency;
+  const rate = fxRates[cur] || 1;
+  return amountPln / rate;
+}
+function money(amountPln){
+  const v = fromPln(amountPln);
+  const digits = v < 20 ? 1 : 0;
+  return v.toFixed(digits).replace('.', ',');
+}
+
+/* ============================================================
+   ŹRÓDŁA DANYCH O KSIĄŻCE
+   ============================================================ */
+let lookupCache = readLS(LS.cache, {});
+function cacheGet(k){
+  const e = lookupCache[k];
+  if(!e) return null;
+  if(Date.now() - e.t > 1000*60*60*24*30){ delete lookupCache[k]; return null; }
+  return e.v;
+}
+function cacheSet(k,v){
+  lookupCache[k] = {t:Date.now(), v:v};
+  const keys = Object.keys(lookupCache);
+  if(keys.length > 300) keys.slice(0, keys.length-300).forEach(k2=>delete lookupCache[k2]);
+  writeLS(LS.cache, lookupCache);
+}
+
+async function fetchJson(url, opts, timeoutMs){
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), timeoutMs || 15000);
+  try{
+    const r = await fetch(url, Object.assign({signal:ctrl.signal}, opts||{}));
+    if(!r.ok){
+      let detail = '';
+      try{ detail = (await r.text()).slice(0,300); }catch(e){}
+      const err = new Error('HTTP ' + r.status + (detail ? ' — ' + detail : ''));
+      err.status = r.status;
+      throw err;
+    }
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+function pickCover(isbn13, gbInfo, olData){
+  const gb = gbInfo && gbInfo.imageLinks;
+  if(gb){
+    const u = gb.extraLarge || gb.large || gb.medium || gb.thumbnail || gb.smallThumbnail;
+    if(u) return u.replace(/^http:/,'https:').replace(/&edge=curl/,'');
+  }
+  if(olData && olData.cover && (olData.cover.large || olData.cover.medium)) return olData.cover.large || olData.cover.medium;
+  if(isbn13) return 'https://covers.openlibrary.org/b/isbn/' + isbn13 + '-L.jpg?default=false';
+  return null;
+}
+
+/* Google Books po ISBN lub po tytule/autorze */
+async function googleBooks(query){
+  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=5&country=PL&q=' + encodeURIComponent(query);
+  const d = await fetchJson(url);
+  return (d.items && d.items.length) ? d.items : [];
+}
+async function openLibraryByIsbn(isbn){
+  const d = await fetchJson('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&format=json&jscmd=data');
+  return d['ISBN:'+isbn] || null;
+}
+async function openLibrarySearch(title, author){
+  const q = new URLSearchParams();
+  if(title) q.set('title', title);
+  if(author) q.set('author', author);
+  q.set('limit','5');
+  const d = await fetchJson('https://openlibrary.org/search.json?' + q.toString());
+  return (d.docs && d.docs.length) ? d.docs : [];
+}
+
+/* Główna funkcja: zbiera metadane z obu źródeł */
+async function resolveBook({isbn, title, author}){
+  const cacheKey = isbn ? ('i:'+isbn) : ('q:'+(title||'')+'|'+(author||'')).toLowerCase();
+  const cached = cacheGet(cacheKey);
+  if(cached) return cached;
+
+  let gbItem = null, ol = null, finalIsbn = isbn || null;
+
+  if(isbn){
+    const [gbRes, olRes] = await Promise.allSettled([
+      googleBooks('isbn:'+isbn),
+      openLibraryByIsbn(isbn)
+    ]);
+    if(gbRes.status==='fulfilled' && gbRes.value.length) gbItem = gbRes.value[0];
+    if(olRes.status==='fulfilled') ol = olRes.value;
+  }
+
+  if(!gbItem && (title || author)){
+    const parts = [];
+    if(title)  parts.push('intitle:'+title);
+    if(author) parts.push('inauthor:'+author);
+    let items = [];
+    try{ items = await googleBooks(parts.join('+')); }catch(e){}
+    if(!items.length && title){ try{ items = await googleBooks(title + ' ' + (author||'')); }catch(e){} }
+    if(items.length){
+      // wolimy wydanie z ISBN i z ceną
+      items.sort((a,b)=> scoreVolume(b) - scoreVolume(a));
+      gbItem = items[0];
+    }
+  }
+
+  if(!gbItem && !ol && (title||author)){
+    try{
+      const docs = await openLibrarySearch(title, author);
+      if(docs.length){
+        const d = docs[0];
+        ol = {
+          title:d.title,
+          authors:(d.author_name||[]).map(n=>({name:n})),
+          publishers:(d.publisher||[]).slice(0,1).map(n=>({name:n})),
+          publish_date:d.first_publish_year ? String(d.first_publish_year) : null,
+          number_of_pages:d.number_of_pages_median || null,
+          cover:d.cover_i ? {large:'https://covers.openlibrary.org/b/id/'+d.cover_i+'-L.jpg'} : null
+        };
+        if(d.isbn && d.isbn.length) finalIsbn = normalizeIsbn(d.isbn.find(x=>x.length===13) || d.isbn[0]) || finalIsbn;
+      }
+    }catch(e){}
+  }
+
+  if(!gbItem && !ol) return null;
+
+  const vi = gbItem ? (gbItem.volumeInfo||{}) : {};
+  const si = gbItem ? (gbItem.saleInfo||{}) : {};
+
+  if(!finalIsbn && vi.industryIdentifiers){
+    const i13 = vi.industryIdentifiers.find(x=>x.type==='ISBN_13');
+    const i10 = vi.industryIdentifiers.find(x=>x.type==='ISBN_10');
+    finalIsbn = i13 ? i13.identifier : (i10 ? normalizeIsbn(i10.identifier) : null);
+  }
+
+  const meta = {
+    isbn: finalIsbn,
+    title: (vi.title ? (vi.title + (vi.subtitle ? '. '+vi.subtitle : '')) : null) || (ol && ol.title) || title || 'Tytuł nieznany',
+    authors: (vi.authors && vi.authors.join(', '))
+          || (ol && ol.authors && ol.authors.map(a=>a.name).join(', '))
+          || author || 'Autor nieznany',
+    publisher: vi.publisher || (ol && ol.publishers && ol.publishers[0] && ol.publishers[0].name) || null,
+    year: parseYear(vi.publishedDate || (ol && ol.publish_date)),
+    pages: vi.pageCount || (ol && ol.number_of_pages) || null,
+    language: vi.language || null,
+    categories: vi.categories || null,
+    ratingsCount: vi.ratingsCount || 0,
+    averageRating: vi.averageRating || null,
+    cover: pickCover(finalIsbn, vi, ol),
+    listPrice: (si.listPrice && si.listPrice.amount) ? {amount:si.listPrice.amount, currency:si.listPrice.currencyCode} : null,
+    retailPrice: (si.retailPrice && si.retailPrice.amount) ? {amount:si.retailPrice.amount, currency:si.retailPrice.currencyCode} : null,
+    infoLink: vi.infoLink || null,
+    source: gbItem ? 'Google Books' : 'Open Library'
+  };
+
+  cacheSet(cacheKey, meta);
+  return meta;
+}
+
+function scoreVolume(item){
+  const vi = item.volumeInfo||{}, si = item.saleInfo||{};
+  let s = 0;
+  if(vi.industryIdentifiers) s += 3;
+  if(si.listPrice) s += 4;
+  if(vi.imageLinks) s += 2;
+  if(vi.pageCount) s += 1;
+  if(vi.language === 'pl') s += 2;
+  return s;
+}
+function parseYear(v){
+  if(!v) return null;
+  const m = String(v).match(/(1[5-9]\d{2}|20\d{2})/);
+  return m ? Number(m[1]) : null;
+}
+
+/* ============================================================
+   SILNIK WYCENY
+   ============================================================ */
+const CONDITIONS = [
+  {key:'nowa',  label:'Nowa',         desc:'w folii',        mult:0.80},
+  {key:'bdb',   label:'Bardzo dobry', desc:'jak nowa',       mult:0.60},
+  {key:'dobry', label:'Dobry',        desc:'ślady czytania', mult:0.42},
+  {key:'dost',  label:'Dostateczny',  desc:'zużyta',         mult:0.26},
+  {key:'zly',   label:'Słaby',        desc:'zniszczona',     mult:0.12}
+];
+const CONDITION_MAP = {};
+CONDITIONS.forEach(c=>CONDITION_MAP[c.key]=c);
+
+const CHANNELS = {
+  allegro:    {mult:1.00, name:'sprzedaż prywatna (Allegro/OLX)'},
+  antykwariat:{mult:0.45, name:'skup do antykwariatu'},
+  kolekcja:   {mult:1.35, name:'rynek kolekcjonerski'}
+};
+
+/* cena katalogowa nowego egzemplarza w PLN */
+function basePricePln(meta){
+  if(meta.listPrice)   return {value: toPln(meta.listPrice.amount, meta.listPrice.currency),   src:'cena katalogowa z Google Books'};
+  if(meta.retailPrice) return {value: toPln(meta.retailPrice.amount, meta.retailPrice.currency), src:'cena sprzedaży z Google Books'};
+
+  const pages = meta.pages || 300;
+  let est = 21 + pages * 0.075;
+  const cat = (meta.categories||[]).join(' ').toLowerCase();
+  if(/juvenile|children|dzieci/.test(cat)) est *= 0.8;
+  if(/medical|science|law|business|computers|technology/.test(cat)) est *= 1.45;
+  if(/art|photograph|design/.test(cat)) est *= 1.6;
+  est = Math.max(16, Math.min(160, est));
+  return {value: est, src:'szacunek na podstawie objętości i tematyki (brak ceny katalogowej w bazach)'};
+}
+
+function valuate(meta, condKey){
+  const cond = CONDITION_MAP[condKey] || CONDITION_MAP[settings.defCond] || CONDITION_MAP.dobry;
+  const base = basePricePln(meta);
+  const channel = CHANNELS[settings.channel] || CHANNELS.allegro;
+
+  let v = base.value * cond.mult * channel.mult;
+  const factors = [];
+
+  const year = meta.year;
+  if(year){
+    const age = new Date().getFullYear() - year;
+    if(age >= 60){ v *= 1.35; factors.push('wiek egzemplarza (przed ' + (new Date().getFullYear()-60) + ')'); }
+    else if(age >= 35){ v *= 1.12; factors.push('starsze wydanie'); }
+    else if(age >= 12 && age < 35){ v *= 0.88; factors.push('wydanie sprzed lat, łatwo dostępne'); }
+  }
+  if(meta.ratingsCount > 2000){ v *= 1.08; factors.push('tytuł popularny, szybko się sprzedaje'); }
+  else if(meta.ratingsCount === 0 && !meta.listPrice){ v *= 0.92; factors.push('mała rozpoznawalność tytułu'); }
+
+  if(meta.pages && meta.pages > 700){ v *= 1.1; factors.push('duża objętość'); }
+
+  const spread = condKey === 'nowa' ? 0.12 : 0.22;
+  const min = Math.max(2, v * (1 - spread));
+  const max = v * (1 + spread * 1.15);
+
+  return {
+    min, max, mid:v,
+    base: base.value,
+    baseSrc: base.src,
+    condition: cond,
+    channel: channel.name,
+    factors
+  };
+}
+
+function marketLinks(meta){
+  const q = encodeURIComponent(meta.isbn || (meta.title + ' ' + (meta.authors||'')));
+  const qt = encodeURIComponent(meta.title + ' ' + (meta.authors||''));
+  return [
+    ['Allegro',        'https://allegro.pl/listing?string=' + q],
+    ['OLX',            'https://www.olx.pl/oferty/q-' + q + '/'],
+    ['Lubimyczytać',   'https://lubimyczytac.pl/szukaj/ksiazki?phrase=' + qt],
+    ['Google Zakupy',  'https://www.google.com/search?tbm=shop&q=' + q]
+  ];
+}
+
+/* ============================================================
+   OBRAZ: wczytanie, skalowanie, kadrowanie
+   ============================================================ */
+function loadImage(src){
+  return new Promise((res, rej)=>{
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>res(img);
+    img.onerror = ()=>rej(new Error('Nie udało się odczytać obrazu'));
+    img.src = src;
+  });
+}
+function fileToDataUrl(file){
+  return new Promise((res, rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = ()=>rej(new Error('Nie udało się odczytać pliku'));
+    r.readAsDataURL(file);
+  });
+}
+function resizeToDataUrl(img, maxSide, quality){
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  return c.toDataURL('image/jpeg', quality || 0.85);
+}
+function cropToDataUrl(img, box, pad){
+  // box: [x0,y0,x1,y1] w ułamkach 0-1
+  const p = pad == null ? 0.02 : pad;
+  const W = img.naturalWidth, H = img.naturalHeight;
+  let [x0,y0,x1,y1] = box;
+  x0 = Math.max(0,(x0-p))*W; y0 = Math.max(0,(y0-p))*H;
+  x1 = Math.min(1,(x1+p))*W; y1 = Math.min(1,(y1+p))*H;
+  const w = Math.max(10, x1-x0), h = Math.max(10, y1-y0);
+  const c = document.createElement('canvas');
+  const scale = Math.min(1, 500/Math.max(w,h));
+  c.width = Math.round(w*scale); c.height = Math.round(h*scale);
+  c.getContext('2d').drawImage(img, x0, y0, w, h, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+
+/* ============================================================
+   KODY KRESKOWE NA ZDJĘCIU
+   ============================================================ */
+async function detectBarcodes(img){
+  const found = new Set();
+
+  // 1) natywne API przeglądarki (Chrome, Edge, Android)
+  if('BarcodeDetector' in window){
+    try{
+      const supported = await window.BarcodeDetector.getSupportedFormats();
+      const formats = ['ean_13','ean_8','upc_a','upc_e','code_128'].filter(f=>supported.includes(f));
+      if(formats.length){
+        const det = new window.BarcodeDetector({formats});
+        const variants = [img];
+        // druga próba na powiększonym obrazie, drobne kody bywają nieczytelne
+        try{
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth*1.6; c.height = img.naturalHeight*1.6;
+          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+          variants.push(c);
+        }catch(e){}
+        for(const v of variants){
+          try{
+            const codes = await det.detect(v);
+            codes.forEach(c=>{ const n = normalizeIsbn(c.rawValue); if(n) found.add(n); });
+          }catch(e){}
+          if(found.size) break;
+        }
+      }
+    }catch(e){}
+  }
+
+  // 2) zapas: html5-qrcode czyta plik (Safari, Firefox)
+  if(!found.size && typeof Html5Qrcode !== 'undefined' && lastFile){
+    try{
+      const tmpId = 'tmp-reader-' + uid();
+      const div = document.createElement('div');
+      div.id = tmpId; div.style.display = 'none';
+      document.body.appendChild(div);
+      const h = new Html5Qrcode(tmpId, {verbose:false});
+      try{
+        const text = await h.scanFile(lastFile, false);
+        const n = normalizeIsbn(text);
+        if(n) found.add(n);
+      }catch(e){}
+      try{ await h.clear(); }catch(e){}
+      div.remove();
+    }catch(e){}
+  }
+  return Array.from(found);
+}
+
+/* ============================================================
+   MODEL WIZYJNY — rozpoznanie tytułów i ocena stanu
+   ============================================================ */
+const VISION_PROMPT = `Jesteś rzeczoznawcą książek używanych. Na zdjęciu znajduje się jedna książka albo kilka książek (stos, półka, rozłożone na stole).
+
+Zadanie:
+1. Wypisz KAŻDĄ książkę widoczną na zdjęciu, od lewej do prawej / od góry do dołu.
+2. Dla każdej odczytaj tytuł i autora z okładki lub grzbietu. Jeśli widać numer ISBN lub kod kreskowy — podaj cyfry.
+3. Oceń stan fizyczny każdego egzemplarza na podstawie tego, co widać: zagięcia, przetarcia grzbietu i rogów, zarysowania, zabrudzenia, pożółkłe kartki, naklejki, oderwana obwoluta.
+
+Odpowiedz WYŁĄCZNIE obiektem JSON, bez komentarza i bez znaczników markdown:
+{"books":[{
+  "title":"dokładny tytuł z okładki",
+  "author":"autor lub null",
+  "isbn":"same cyfry lub null",
+  "cover_type":"twarda|miekka|null",
+  "condition":"nowa|bdb|dobry|dost|zly",
+  "condition_notes":"krótko po polsku, co widać na egzemplarzu",
+  "confidence":0.0-1.0,
+  "box":[x0,y0,x1,y1]
+}]}
+
+"box" to prostokąt obejmujący książkę, cztery liczby od 0 do 1 względem szerokości i wysokości zdjęcia.
+Skala stanu: nowa = fabrycznie nowa, bez śladów; bdb = praktycznie nieużywana; dobry = czytana, drobne przetarcia; dost = wyraźnie zużyta, zagięcia, przybrudzenia; zly = zniszczona, rozpadająca się, poplamiona.
+Jeśli nie widać żadnej książki, zwróć {"books":[]}.`;
+
+function dataUrlParts(dataUrl){
+  const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  return m ? {mime:m[1], data:m[2]} : {mime:'image/jpeg', data:dataUrl.split(',')[1]||''};
+}
+
+async function callVision(dataUrl){
+  const key = getApiKey();
+  if(!key) throw new Error('Brak klucza API');
+  const {mime, data} = dataUrlParts(dataUrl);
+  const model = activeModel();
+  const provider = settings.provider;
+  let text = '';
+
+  if(provider === 'gemini'){
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key);
+    const body = {
+      contents:[{role:'user', parts:[{text:VISION_PROMPT}, {inline_data:{mime_type:mime, data:data}}]}],
+      generationConfig:{temperature:0.1, maxOutputTokens:2600, responseMimeType:'application/json'}
+    };
+    const d = await fetchJson(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}, 60000);
+    text = (((d.candidates||[])[0]||{}).content||{}).parts?.map(p=>p.text||'').join('') || '';
+  }
+  else if(provider === 'openai'){
+    const body = {
+      model, temperature:0.1, max_tokens:2600,
+      response_format:{type:'json_object'},
+      messages:[{role:'user', content:[
+        {type:'text', text:VISION_PROMPT},
+        {type:'image_url', image_url:{url:dataUrl}}
+      ]}]
+    };
+    const d = await fetchJson('https://api.openai.com/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+key},
+      body:JSON.stringify(body)
+    }, 60000);
+    text = (((d.choices||[])[0]||{}).message||{}).content || '';
+  }
+  else if(provider === 'anthropic'){
+    const body = {
+      model, max_tokens:2600, temperature:0.1,
+      messages:[{role:'user', content:[
+        {type:'image', source:{type:'base64', media_type:mime, data:data}},
+        {type:'text', text:VISION_PROMPT}
+      ]}]
+    };
+    const d = await fetchJson('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify(body)
+    }, 60000);
+    text = (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  }
+  else { // openrouter
+    const body = {
+      model, temperature:0.1, max_tokens:2600,
+      messages:[{role:'user', content:[
+        {type:'text', text:VISION_PROMPT},
+        {type:'image_url', image_url:{url:dataUrl}}
+      ]}]
+    };
+    const d = await fetchJson('https://openrouter.ai/api/v1/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify(body)
+    }, 60000);
+    text = (((d.choices||[])[0]||{}).message||{}).content || '';
+  }
+
+  return parseBooksJson(text);
+}
+
+function parseBooksJson(text){
+  if(!text) return [];
+  let t = String(text).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+  let obj = null;
+  try{ obj = JSON.parse(t); }
+  catch(e){
+    const m = t.match(/\{[\s\S]*\}/);
+    if(m){ try{ obj = JSON.parse(m[0]); }catch(e2){} }
+  }
+  if(!obj) return [];
+  const arr = Array.isArray(obj) ? obj : (obj.books || obj.ksiazki || []);
+  return (Array.isArray(arr) ? arr : []).map(b=>({
+    title: (b.title||b.tytul||'').trim() || null,
+    author: (b.author||b.autor||'') ? String(b.author||b.autor).trim() : null,
+    isbn: normalizeIsbn(b.isbn||''),
+    coverType: b.cover_type || null,
+    condition: CONDITION_MAP[b.condition] ? b.condition : null,
+    notes: b.condition_notes || b.uwagi || null,
+    confidence: typeof b.confidence === 'number' ? b.confidence : null,
+    box: Array.isArray(b.box) && b.box.length===4 && b.box.every(n=>typeof n==='number' && n>=0 && n<=1) ? b.box : null
+  })).filter(b=>b.title || b.isbn);
+}
+
+/* ============================================================
+   OCR — zapas bez klucza API
+   ============================================================ */
+let tesseractLoading = null;
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((res, rej)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.0/tesseract.min.js';
+    s.onload = ()=>res(window.Tesseract);
+    s.onerror = ()=>rej(new Error('Nie udało się pobrać biblioteki OCR'));
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+async function ocrTitle(dataUrl, onProgress){
+  const T = await loadTesseract();
+  const worker = await T.createWorker(['pol','eng'], 1, {
+    workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/worker.min.js',
+    corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.0',
+    langPath:'https://tessdata.projectnaptha.com/4.0.0',
+    logger: m => { if(onProgress && m.status==='recognizing text') onProgress(m.progress); }
+  });
+  const {data} = await worker.recognize(dataUrl);
+  await worker.terminate();
+  const lines = (data.lines||[])
+    .map(l=>({text:(l.text||'').replace(/\s+/g,' ').trim(), conf:l.confidence||0, h:(l.bbox? l.bbox.y1-l.bbox.y0 : 0)}))
+    .filter(l=>l.text.length>2 && l.conf>50 && /[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(l.text));
+  lines.sort((a,b)=> (b.h*Math.log(2+b.text.length)) - (a.h*Math.log(2+a.text.length)) );
+  const top = lines.slice(0,3).map(l=>l.text);
+  return {guess: top.join(' '), lines: top, raw: data.text};
+}
+
+/* ============================================================
+   KARTA WYNIKU
+   ============================================================ */
+function renderCondRow(entry){
+  return '<div class="cond-label">Stan egzemplarza</div><div class="cond-row">' +
+    CONDITIONS.map(c =>
+      '<button class="cond-btn" type="button" data-cond="'+c.key+'" aria-pressed="'+(entry.condition===c.key)+'">' +
+        esc(c.label) + '<small>' + esc(c.desc) + '</small>' +
+      '</button>'
+    ).join('') + '</div>';
+}
+
+function renderBookCard(entry){
+  const m = entry.meta, v = entry.valuation;
+  const cover = entry.thumb || m.cover;
+  const coverHtml = cover
+    ? '<img class="book-cover" src="'+esc(cover)+'" alt="Okładka: '+esc(m.title)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'book-cover placeholder\',textContent:\'?\'}))">'
+    : '<div class="book-cover placeholder">?</div>';
+
+  const metaLine = [
+    m.publisher ? '<b>Wydawca</b> ' + esc(m.publisher) : null,
+    m.year ? '<b>Rok</b> ' + m.year : null,
+    m.pages ? '<b>Stron</b> ' + m.pages : null,
+    m.isbn ? '<b>ISBN</b> ' + esc(m.isbn) : null
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+
+  const chips = (entry.badges||[]).map(b =>
+    '<span class="chip '+(b.kind||'')+'">'+esc(b.text)+'</span>'
+  ).join('');
+
+  const links = marketLinks(m).map(([n,u]) =>
+    '<a href="'+esc(u)+'" target="_blank" rel="noopener">Sprawdź na '+esc(n)+'</a>'
+  ).join('');
+
+  const cur = settings.currency;
+  const factorLine = v.factors.length ? ' Uwzględniono: ' + esc(v.factors.join(', ')) + '.' : '';
+
+  return '' +
+  '<div class="book-head">' + coverHtml +
+    '<div class="grow">' +
+      '<h3 class="book-title">' + esc(m.title) + '</h3>' +
+      '<p class="book-author">' + esc(m.authors) + '</p>' +
+      '<p class="book-meta">' + metaLine + '</p>' +
+      (chips ? '<div class="chips">'+chips+'</div>' : '') +
+    '</div>' +
+  '</div>' +
+  (entry.aiNotes ? '<p class="ai-note">' + esc(entry.aiNotes) + '</p>' : '') +
+  renderCondRow(entry) +
+  '<div class="valuation">' +
+    '<div class="val-main">' +
+      '<span class="val-num">' + money(v.min) + '</span>' +
+      '<span class="val-dash">–</span>' +
+      '<span class="val-num">' + money(v.max) + '</span>' +
+      '<span class="val-cur">' + esc(cur) + '</span>' +
+    '</div>' +
+    '<div class="val-side">Realna cena wywoławcza: <b>' + money(v.mid) + ' ' + esc(cur) + '</b><br>' +
+      'Kanał: ' + esc(v.channel) + '</div>' +
+  '</div>' +
+  '<p class="val-basis">Punkt wyjścia: nowy egzemplarz ~' + money(v.base) + ' ' + esc(cur) + ' — ' + esc(v.baseSrc) + '.' + factorLine + '</p>' +
+  '<div class="market-links">' + links + '</div>' +
+  '<div class="book-actions">' +
+    '<button class="btn small" data-act="save" type="button">' + (entry.savedId ? 'Zapisano w kartotece' : 'Zapisz w kartotece') + '</button>' +
+    '<button class="btn ghost small" data-act="copy" type="button">Kopiuj opis oferty</button>' +
+    '<button class="btn ghost small" data-act="share" type="button">Udostępnij</button>' +
+    '<button class="btn ghost small" data-act="remove" type="button">Usuń z wyników</button>' +
+  '</div>';
+}
+
+function mountEntry(container, entry){
+  const el = document.createElement('article');
+  el.className = 'book pending';
+  el.dataset.id = entry.id;
+  el.innerHTML = '<div class="book-head"><div class="book-cover placeholder">…</div><div class="grow">' +
+    '<h3 class="book-title">' + esc(entry.label || 'Szukam w bazach…') + '</h3>' +
+    '<p class="book-author">sprawdzam Google Books i Open Library</p></div></div>';
+  container.appendChild(el);
+  entry.el = el;
+  return el;
+}
+
+function paintEntry(entry){
+  entry.valuation = valuate(entry.meta, entry.condition);
+  entry.el.className = 'book';
+  entry.el.innerHTML = renderBookCard(entry);
+
+  if(entry.bound) return;
+  entry.bound = true;
+  entry.el.addEventListener('click', e=>{
+    const cb = e.target.closest('.cond-btn');
+    if(cb){
+      entry.condition = cb.dataset.cond;
+      paintEntry(entry);
+      if(entry.savedId) updateSaved(entry);
+      return;
+    }
+    const ab = e.target.closest('[data-act]');
+    if(!ab) return;
+    const act = ab.dataset.act;
+    if(act === 'save'){ saveEntry(entry); }
+    if(act === 'remove'){ entry.el.remove(); }
+    if(act === 'copy'){ copyOffer(entry); }
+    if(act === 'share'){ shareEntry(entry); }
+  });
+}
+
+function failEntry(entry, msg){
+  entry.el.className = 'book failed';
+  entry.el.innerHTML = '<h3 class="book-title">' + esc(entry.label || 'Nie rozpoznano') + '</h3>' +
+    '<p class="book-author">' + esc(msg) + '</p>' +
+    '<div class="book-actions"><button class="btn ghost small" data-act="remove" type="button">Usuń</button></div>';
+  entry.el.querySelector('[data-act=remove]').addEventListener('click', ()=>entry.el.remove());
+}
+
+function offerText(entry){
+  const m = entry.meta, v = entry.valuation;
+  return [
+    m.title + (m.authors ? ' — ' + m.authors : ''),
+    m.publisher ? 'Wydawnictwo: ' + m.publisher + (m.year ? ', ' + m.year : '') : (m.year ? 'Rok wydania: ' + m.year : ''),
+    m.pages ? 'Liczba stron: ' + m.pages : '',
+    m.isbn ? 'ISBN: ' + m.isbn : '',
+    'Stan: ' + v.condition.label + ' (' + v.condition.desc + ')' + (entry.aiNotes ? ' — ' + entry.aiNotes : ''),
+    'Cena: ' + money(v.mid) + ' ' + settings.currency + ' (widełki ' + money(v.min) + '–' + money(v.max) + ')'
+  ].filter(Boolean).join('\n');
+}
+async function copyOffer(entry){
+  const t = offerText(entry);
+  try{ await navigator.clipboard.writeText(t); toast('Opis skopiowany do schowka'); }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('Opis skopiowany'); }catch(e2){ toast('Nie udało się skopiować'); }
+    ta.remove();
+  }
+}
+async function shareEntry(entry){
+  const text = offerText(entry);
+  if(navigator.share){
+    try{ await navigator.share({title:entry.meta.title, text}); return; }catch(e){ if(e.name==='AbortError') return; }
+  }
+  copyOffer(entry);
+}
+
+/* ============================================================
+   KARTOTEKA (trwała historia)
+   ============================================================ */
+let hist = readLS(LS.hist, []);
+function saveHist(){ writeLS(LS.hist, hist); renderHist(); }
+
+function entryToRecord(entry){
+  const m = entry.meta, v = entry.valuation;
+  return {
+    id: entry.savedId || uid(),
+    ts: Date.now(),
+    isbn: m.isbn || '',
+    title: m.title,
+    authors: m.authors,
+    publisher: m.publisher || '',
+    year: m.year || '',
+    pages: m.pages || '',
+    cover: entry.thumb || m.cover || '',
+    condition: entry.condition,
+    notes: entry.aiNotes || '',
+    min: v.min, max: v.max, mid: v.mid,
+    currency: settings.currency,
+    channel: settings.channel,
+    sold: false,
+    via: (entry.badges||[]).map(b=>b.text).join(', ')
+  };
+}
+function saveEntry(entry){
+  if(entry.savedId){ toast('Ta pozycja jest już w kartotece'); return; }
+  const rec = entryToRecord(entry);
+  entry.savedId = rec.id;
+  hist.unshift(rec);
+  saveHist();
+  paintEntry(entry);
+  toast('Dodano do kartoteki');
+}
+function updateSaved(entry){
+  const i = hist.findIndex(h=>h.id===entry.savedId);
+  if(i<0) return;
+  const rec = entryToRecord(entry);
+  rec.id = entry.savedId; rec.ts = hist[i].ts; rec.sold = hist[i].sold;
+  hist[i] = rec;
+  saveHist();
+}
+function autoSave(entry){ if(settings.autoSave) saveEntry(entry); }
+
+function histView(){
+  const q = ($('#histSearch').value||'').toLowerCase().trim();
+  const f = $('#histFilter').value, s = $('#histSort').value;
+  let list = hist.filter(h=>{
+    if(f==='sold' && !h.sold) return false;
+    if(f==='active' && h.sold) return false;
+    if(!q) return true;
+    return (h.title+' '+h.authors+' '+h.isbn+' '+(h.publisher||'')).toLowerCase().includes(q);
+  });
+  const cmp = {
+    new:(a,b)=>b.ts-a.ts, old:(a,b)=>a.ts-b.ts,
+    'price-desc':(a,b)=>b.mid-a.mid, 'price-asc':(a,b)=>a.mid-b.mid,
+    title:(a,b)=>a.title.localeCompare(b.title,'pl')
+  }[s] || ((a,b)=>b.ts-a.ts);
+  return list.sort(cmp);
+}
+
+function renderHist(){
+  $('#histBadge').textContent = hist.length;
+
+  const active = hist.filter(h=>!h.sold);
+  const sumMid = active.reduce((s,h)=>s+h.mid,0);
+  const sumMax = active.reduce((s,h)=>s+h.max,0);
+  const sold = hist.filter(h=>h.sold);
+  $('#stats').innerHTML =
+    stat(hist.length, 'pozycji w kartotece') +
+    stat(money(sumMid) + ' ' + settings.currency, 'wartość na sprzedaż') +
+    stat(money(sumMax) + ' ' + settings.currency, 'przy dobrym kupcu') +
+    stat(sold.length, 'sprzedanych');
+
+  const list = histView();
+  const box = $('#histList');
+  if(!hist.length){
+    box.innerHTML = '<div class="empty"><p class="big">Kartoteka jest pusta</p>' +
+      '<p>Wrzuć zdjęcie półki albo wpisz pierwszy ISBN — wyceny wylądują tutaj.</p></div>';
+    return;
+  }
+  if(!list.length){
+    box.innerHTML = '<div class="empty"><p class="big">Nic nie pasuje do filtra</p><p>Zmień zapytanie albo pokaż wszystkie pozycje.</p></div>';
+    return;
+  }
+  box.innerHTML = list.map(h=>{
+    const cond = CONDITION_MAP[h.condition] || CONDITION_MAP.dobry;
+    const thumb = h.cover
+      ? '<img class="hist-thumb" src="'+esc(h.cover)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">'
+      : '<div class="hist-thumb"></div>';
+    return '<div class="hist-item '+(h.sold?'sold':'')+'" data-id="'+h.id+'">' + thumb +
+      '<div class="hist-body">' +
+        '<span class="hist-title">'+esc(h.title)+'</span>' +
+        '<span class="hist-sub">'+esc(h.authors)+' · '+esc(cond.label)+(h.isbn?' · '+esc(h.isbn):'')+' · '+new Date(h.ts).toLocaleDateString('pl-PL')+'</span>' +
+      '</div>' +
+      '<span class="hist-price">'+money(h.min)+'–'+money(h.max)+'</span>' +
+      '<div class="hist-tools">' +
+        '<button data-h="sold" title="'+(h.sold?'Cofnij sprzedaż':'Oznacz jako sprzedaną')+'" aria-label="Oznacz jako sprzedaną">'+(h.sold?'↺':'✓')+'</button>' +
+        '<button data-h="copy" title="Kopiuj opis" aria-label="Kopiuj opis">⧉</button>' +
+        '<button data-h="del" title="Usuń" aria-label="Usuń">✕</button>' +
+      '</div></div>';
+  }).join('');
+}
+function stat(v,k){ return '<div class="stat"><span class="v">'+esc(v)+'</span><span class="k">'+esc(k)+'</span></div>'; }
+
+$('#histList').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-h]');
+  if(!btn) return;
+  const id = e.target.closest('.hist-item').dataset.id;
+  const i = hist.findIndex(h=>h.id===id);
+  if(i<0) return;
+  const act = btn.dataset.h;
+  if(act==='del'){
+    const removed = hist.splice(i,1)[0];
+    saveHist();
+    toast('Usunięto: ' + removed.title);
+  }
+  if(act==='sold'){ hist[i].sold = !hist[i].sold; saveHist(); }
+  if(act==='copy'){
+    const h = hist[i];
+    const cond = CONDITION_MAP[h.condition] || CONDITION_MAP.dobry;
+    const t = [h.title + (h.authors?' — '+h.authors:''), h.isbn?'ISBN: '+h.isbn:'', 'Stan: '+cond.label,
+      'Cena: '+money(h.mid)+' '+settings.currency].filter(Boolean).join('\n');
+    navigator.clipboard.writeText(t).then(()=>toast('Skopiowano')).catch(()=>toast('Nie udało się skopiować'));
+  }
+});
+['#histSearch','#histSort','#histFilter'].forEach(sel=>{
+  $(sel).addEventListener('input', renderHist);
+  $(sel).addEventListener('change', renderHist);
+});
+
+/* ---------- eksport / import ---------- */
+function download(name, content, type){
+  const blob = new Blob([content], {type:type||'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+$('#exportCsvBtn').addEventListener('click', ()=>{
+  if(!hist.length){ toast('Kartoteka jest pusta'); return; }
+  const head = ['Data','Tytuł','Autor','ISBN','Wydawca','Rok','Stron','Stan','Min','Max','Sugerowana','Waluta','Sprzedana','Uwagi'];
+  const rows = hist.map(h=>[
+    new Date(h.ts).toLocaleString('pl-PL'), h.title, h.authors, h.isbn, h.publisher, h.year, h.pages,
+    (CONDITION_MAP[h.condition]||{}).label||h.condition,
+    fromPln(h.min).toFixed(2), fromPln(h.max).toFixed(2), fromPln(h.mid).toFixed(2), settings.currency,
+    h.sold?'tak':'nie', h.notes||''
+  ]);
+  const csv = [head].concat(rows).map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  download('kartoteka-'+new Date().toISOString().slice(0,10)+'.csv', '\uFEFF'+csv, 'text/csv;charset=utf-8');
+});
+$('#exportJsonBtn').addEventListener('click', ()=>{
+  download('kartoteka-backup-'+new Date().toISOString().slice(0,10)+'.json',
+    JSON.stringify({version:VERSION, exported:new Date().toISOString(), books:hist}, null, 2),
+    'application/json');
+});
+$('#importJsonBtn').addEventListener('click', ()=> $('#importInput').click());
+$('#importInput').addEventListener('change', async e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  try{
+    const d = JSON.parse(await f.text());
+    const incoming = Array.isArray(d) ? d : (d.books||[]);
+    if(!Array.isArray(incoming) || !incoming.length) throw new Error('pusto');
+    const ids = new Set(hist.map(h=>h.id));
+    let added = 0;
+    incoming.forEach(r=>{ if(r && r.title && !ids.has(r.id)){ hist.push(Object.assign({id:uid(), ts:Date.now(), sold:false}, r)); added++; } });
+    saveHist();
+    toast('Wczytano pozycji: ' + added);
+  }catch(err){ toast('To nie jest poprawna kopia zapasowa'); }
+  e.target.value = '';
+});
+$('#clearHistBtn').addEventListener('click', ()=>{
+  if(!hist.length) return;
+  if(confirm('Usunąć wszystkie ' + hist.length + ' pozycji z kartoteki? Tej operacji nie da się cofnąć — zrób najpierw kopię JSON.')){
+    hist = []; saveHist(); toast('Kartoteka wyczyszczona');
+  }
+});
+$('#printBtn').addEventListener('click', ()=>window.print());
+
+/* ============================================================
+   PRZEPŁYW: WYCENA POJEDYNCZEJ POZYCJI
+   ============================================================ */
+const liveEntries = [];
+
+async function processCandidate(container, cand){
+  const entry = {
+    id: uid(),
+    label: cand.title || (cand.isbn ? 'ISBN ' + cand.isbn : 'Pozycja'),
+    condition: cand.condition || settings.defCond,
+    aiNotes: cand.notes || null,
+    thumb: cand.thumb || null,
+    badges: cand.badges || [],
+    savedId: null
+  };
+  mountEntry(container, entry);
+  try{
+    const meta = await resolveBook({isbn:cand.isbn, title:cand.title, author:cand.author});
+    if(!meta){
+      failEntry(entry, cand.isbn
+        ? 'Nie znalazłem tego numeru w Google Books ani Open Library. Sprawdź cyfry albo wpisz tytuł ręcznie.'
+        : 'Nie dopasowałem tytułu do żadnego wydania. Spróbuj wyraźniejszego zdjęcia okładki albo wpisz ISBN.');
+      return null;
+    }
+    if(cand.isbn && !meta.isbn) meta.isbn = cand.isbn;
+    entry.meta = meta;
+    liveEntries.push(entry);
+    paintEntry(entry);
+    autoSave(entry);
+    return entry;
+  }catch(err){
+    failEntry(entry, 'Błąd połączenia z bazą: ' + err.message);
+    return null;
+  }
+}
+
+/* ============================================================
+   PRZEPŁYW: ZDJĘCIE
+   ============================================================ */
+let lastFile = null, lastImg = null, lastDataUrl = null;
+
+function setPhotoStatus(msg, kind){
+  const el = $('#photoStatus');
+  el.textContent = msg || '';
+  el.className = 'status' + (kind ? ' '+kind : '');
+}
+function photoBusy(on){
+  $('#photoProgress').classList.toggle('active', !!on);
+  $('#analyzeBtn').disabled = !!on;
+}
+
+async function acceptImage(file){
+  if(!file || !file.type.startsWith('image/')){ toast('To nie jest plik graficzny'); return; }
+  lastFile = file;
+  try{
+    const raw = await fileToDataUrl(file);
+    lastImg = await loadImage(raw);
+    lastDataUrl = resizeToDataUrl(lastImg, 1500, 0.86);
+    $('#preview').src = lastDataUrl;
+    $('#previewWrap').classList.add('active');
+    $('#imgInfo').textContent = lastImg.naturalWidth + '×' + lastImg.naturalHeight + ' px · ' + Math.round(file.size/1024) + ' kB';
+    setPhotoStatus('Zdjęcie gotowe. Kliknij „Rozpoznaj i wyceń”.');
+  }catch(e){
+    setPhotoStatus('Nie udało się otworzyć tego zdjęcia.', 'err');
+  }
+}
+
+async function analyzePhoto(){
+  if(!lastImg){ toast('Najpierw wrzuć zdjęcie'); return; }
+  const container = $('#photoResults');
+  container.innerHTML = '';
+  photoBusy(true);
+
+  try{
+    // 1. kody kreskowe
+    setPhotoStatus('Szukam kodów kreskowych na zdjęciu…');
+    let isbns = [];
+    try{ isbns = await detectBarcodes(lastImg); }catch(e){}
+
+    // 2. model wizyjny
+    let visionBooks = [];
+    if(hasVision()){
+      setPhotoStatus('Rozpoznaję okładki i oceniam stan egzemplarzy…');
+      try{
+        visionBooks = await callVision(lastDataUrl);
+      }catch(err){
+        setPhotoStatus('Model wizyjny odmówił: ' + err.message, 'err');
+      }
+    }
+
+    // 3. sklejanie wyników
+    let candidates = [];
+    if(visionBooks.length){
+      const pool = isbns.slice();
+      candidates = visionBooks.map(b=>{
+        let isbn = b.isbn;
+        if(isbn){ const i = pool.indexOf(isbn); if(i>=0) pool.splice(i,1); }
+        else if(visionBooks.length === 1 && pool.length === 1){ isbn = pool.shift(); }
+        return {
+          isbn, title:b.title, author:b.author,
+          condition:b.condition, notes:b.notes,
+          thumb: b.box ? cropToDataUrl(lastImg, b.box) : null,
+          badges: [
+            {text:'rozpoznane ze zdjęcia', kind:'ai'},
+            b.condition ? {text:'stan oceniony automatycznie', kind:'ai'} : null,
+            isbn ? {text:'ISBN z kodu', kind:'scan'} : null,
+            b.confidence!=null ? {text:'pewność ' + Math.round(b.confidence*100) + '%'} : null
+          ].filter(Boolean)
+        };
+      });
+      // kody, których model nie przypisał do żadnej książki
+      pool.forEach(i=>candidates.push({isbn:i, badges:[{text:'kod kreskowy ze zdjęcia', kind:'scan'}]}));
+    }
+    else if(isbns.length){
+      candidates = isbns.map(i=>({isbn:i, badges:[{text:'kod kreskowy ze zdjęcia', kind:'scan'}]}));
+    }
+    else {
+      // 4. OCR jako ostatnia deska ratunku
+      setPhotoStatus('Nie widzę kodu kreskowego. Odczytuję tytuł z okładki (to może potrwać kilkanaście sekund)…');
+      try{
+        const r = await ocrTitle(lastDataUrl, p=>{
+          setPhotoStatus('Czytam tekst z okładki… ' + Math.round(p*100) + '%');
+        });
+        if(r.guess && r.guess.length > 3){
+          candidates = [{title:r.guess, badges:[{text:'tytuł odczytany z okładki (OCR)', kind:'scan'}]}];
+        }
+      }catch(e){
+        setPhotoStatus('Nie udało się uruchomić OCR: ' + e.message, 'err');
+      }
+    }
+
+    if(!candidates.length){
+      setPhotoStatus(hasVision()
+        ? 'Nie rozpoznałem żadnej książki na tym zdjęciu. Zrób kadr z bliska, na wprost okładki i przy dobrym świetle.'
+        : 'Nie znalazłem kodu kreskowego ani czytelnego tytułu. Włącz rozpoznawanie modelem wizyjnym w Ustawieniach albo sfotografuj kod kreskowy z tyłu książki.', 'err');
+      photoBusy(false);
+      return;
+    }
+
+    setPhotoStatus('Znalazłem pozycji: ' + candidates.length + '. Pobieram dane i liczę wyceny…');
+    let okCount = 0;
+    for(const c of candidates){
+      const e = await processCandidate(container, c);
+      if(e) okCount++;
+      await sleep(120); // delikatnie dla limitów API
+    }
+    setPhotoStatus('Gotowe. Wycenionych pozycji: ' + okCount + ' z ' + candidates.length + '.', 'ok');
+    if(okCount) beep();
+  }catch(err){
+    setPhotoStatus('Coś poszło nie tak: ' + err.message, 'err');
+  }finally{
+    photoBusy(false);
+  }
+}
+
+/* ---------- wejścia obrazu ---------- */
+const dz = $('#dropzone');
+dz.addEventListener('click', ()=> $('#fileInput').click());
+dz.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('#fileInput').click(); }});
+$('#pickFileBtn').addEventListener('click', e=>{ e.stopPropagation(); $('#fileInput').click(); });
+$('#pickCamBtn').addEventListener('click', e=>{ e.stopPropagation(); $('#camInput').click(); });
+$('#fileInput').addEventListener('change', e=>{ if(e.target.files[0]) acceptImage(e.target.files[0]); e.target.value=''; });
+$('#camInput').addEventListener('change', e=>{ if(e.target.files[0]) acceptImage(e.target.files[0]); e.target.value=''; });
+$('#analyzeBtn').addEventListener('click', analyzePhoto);
+$('#clearImgBtn').addEventListener('click', ()=>{
+  lastFile = lastImg = lastDataUrl = null;
+  $('#previewWrap').classList.remove('active');
+  $('#photoResults').innerHTML = '';
+  setPhotoStatus('');
+});
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('dragging'); }));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('dragging'); }));
+dz.addEventListener('drop', e=>{
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) acceptImage(f);
+});
+window.addEventListener('paste', e=>{
+  const items = (e.clipboardData||{}).items || [];
+  for(const it of items){
+    if(it.type && it.type.startsWith('image/')){
+      const f = it.getAsFile();
+      if(f){ goTab('photo'); acceptImage(f); toast('Wklejono zdjęcie ze schowka'); }
+      break;
+    }
+  }
+});
+
+/* ============================================================
+   PRZEPŁYW: ISBN
+   ============================================================ */
+async function runIsbnSearch(){
+  const raw = $('#isbnInput').value || '';
+  const parts = raw.split(/[\s,;]+/).map(cleanIsbn).filter(Boolean);
+  if(!parts.length){
+    $('#isbnStatus').textContent = 'Wpisz numer ISBN.';
+    $('#isbnStatus').className = 'status err';
+    return;
+  }
+  const valid = [], bad = [];
+  parts.forEach(p=>{ const n = normalizeIsbn(p); n ? valid.push(n) : bad.push(p); });
+  if(!valid.length){
+    $('#isbnStatus').textContent = 'Ten numer nie wygląda na poprawny ISBN — suma kontrolna się nie zgadza. Sprawdź cyfry.';
+    $('#isbnStatus').className = 'status err';
+    return;
+  }
+  const container = $('#isbnResults');
+  container.innerHTML = '';
+  $('#isbnProgress').classList.add('active');
+  $('#isbnBtn').disabled = true;
+  $('#isbnStatus').className = 'status';
+  $('#isbnStatus').textContent = 'Szukam… ' + valid.length + ' ' + (valid.length===1?'pozycja':'pozycji');
+
+  let ok = 0;
+  for(const isbn of valid){
+    const e = await processCandidate(container, {isbn, badges:[{text:'wpisany ISBN'}]});
+    if(e) ok++;
+  }
+  $('#isbnProgress').classList.remove('active');
+  $('#isbnBtn').disabled = false;
+  $('#isbnStatus').className = 'status ok';
+  $('#isbnStatus').textContent = 'Wycenionych: ' + ok + ' z ' + valid.length +
+    (bad.length ? '. Pominięto niepoprawne: ' + bad.join(', ') : '.');
+}
+$('#isbnBtn').addEventListener('click', runIsbnSearch);
+$('#isbnInput').addEventListener('keydown', e=>{ if(e.key==='Enter') runIsbnSearch(); });
+
+/* ============================================================
+   PRZEPŁYW: SKANER KAMERĄ
+   ============================================================ */
+let scanner = null, cameras = [], camIndex = 0, lastScanned = '', lastScanTime = 0;
+
+function setScanStatus(m, kind){
+  const el = $('#scanStatus');
+  el.textContent = m||'';
+  el.className = 'status' + (kind?' '+kind:'');
+}
+async function startScanner(){
+  if(typeof Html5Qrcode === 'undefined'){
+    setScanStatus('Biblioteka skanera się nie wczytała. Sprawdź połączenie z internetem i odśwież stronę.', 'err');
+    return;
+  }
+  $('#reader').classList.add('active');
+  $('#reader').innerHTML = '';
+  setScanStatus('Uruchamiam kamerę…');
+  try{
+    try{ cameras = await Html5Qrcode.getCameras(); }catch(e){ cameras = []; }
+    $('#switchCamBtn').hidden = cameras.length < 2;
+
+    scanner = new Html5Qrcode('reader', {
+      verbose:false,
+      formatsToSupport: (typeof Html5QrcodeSupportedFormats !== 'undefined') ? [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.QR_CODE
+      ] : undefined
+    });
+
+    const target = cameras.length ? {deviceId:{exact:cameras[camIndex % cameras.length].id}} : {facingMode:'environment'};
+    await scanner.start(target,
+      {fps:10, qrbox:(vw,vh)=>({width:Math.min(300, vw*0.85), height:Math.min(160, vh*0.45)}), aspectRatio:1.4},
+      onScanSuccess, ()=>{});
+    $('#scanBtn').textContent = 'Zatrzymaj kamerę';
+    setScanStatus('Wyceluj w kod kreskowy. Skanuję dalej po każdym trafieniu.');
+  }catch(err){
+    setScanStatus('Brak dostępu do kamery: ' + (err.message||err) + '. Na iPhonie użyj Safari i zezwól na kamerę w ustawieniach strony.', 'err');
+    $('#reader').classList.remove('active');
+    scanner = null;
+  }
+}
+async function stopScanner(){
+  if(!scanner) return;
+  try{ await scanner.stop(); await scanner.clear(); }catch(e){}
+  scanner = null;
+  $('#reader').classList.remove('active');
+  $('#scanBtn').textContent = 'Włącz kamerę';
+  $('#switchCamBtn').hidden = true;
+}
+async function onScanSuccess(text){
+  const isbn = normalizeIsbn(text);
+  if(!isbn) return;
+  const now = Date.now();
+  if(isbn === lastScanned && now - lastScanTime < 3500) return;
+  lastScanned = isbn; lastScanTime = now;
+  beep();
+  setScanStatus('Trafiony: ' + isbn + ' — pobieram dane…');
+  const e = await processCandidate($('#scanResults'), {isbn, badges:[{text:'zeskanowany kod', kind:'scan'}]});
+  setScanStatus(e ? 'Zapisane. Podstaw kolejną książkę.' : 'Tego numeru nie ma w bazach. Podstaw kolejną książkę.', e?'ok':'err');
+}
+$('#scanBtn').addEventListener('click', ()=> scanner ? stopScanner() : startScanner());
+$('#switchCamBtn').addEventListener('click', async ()=>{
+  camIndex++;
+  await stopScanner();
+  startScanner();
+});
+
+/* ============================================================
+   USTAWIENIA
+   ============================================================ */
+function fillSettings(){
+  $('#providerSel').value = settings.provider;
+  $('#apiKeyInput').value = getApiKey();
+  $('#modelInput').value = settings.model;
+  $('#modelInput').placeholder = DEFAULT_MODELS[settings.provider];
+  $('#currencySel').value = settings.currency;
+  $('#channelSel').value = settings.channel;
+  $('#defCondSel').value = settings.defCond;
+  $('#autoSaveChk').checked = settings.autoSave;
+  $('#soundChk').checked = settings.sound;
+  $('#noKeyNotice').style.display = hasVision() ? 'none' : '';
+}
+$('#providerSel').addEventListener('change', e=>{
+  settings.provider = e.target.value;
+  settings.model = '';
+  $('#modelInput').value = '';
+  $('#modelInput').placeholder = DEFAULT_MODELS[settings.provider];
+  saveSettings();
+});
+$('#modelInput').addEventListener('change', e=>{ settings.model = e.target.value.trim(); saveSettings(); });
+$('#currencySel').addEventListener('change', e=>{ settings.currency = e.target.value; saveSettings(); renderHist(); repaintAll(); });
+$('#channelSel').addEventListener('change', e=>{ settings.channel = e.target.value; saveSettings(); repaintAll(); });
+$('#defCondSel').addEventListener('change', e=>{ settings.defCond = e.target.value; saveSettings(); });
+$('#autoSaveChk').addEventListener('change', e=>{ settings.autoSave = e.target.checked; saveSettings(); });
+$('#soundChk').addEventListener('change', e=>{ settings.sound = e.target.checked; saveSettings(); });
+
+function repaintAll(){
+  // przelicza widoczne wyniki po zmianie waluty lub kanału sprzedaży
+  liveEntries.forEach(en=>{
+    if(en.el && en.el.isConnected && en.meta) paintEntry(en);
+  });
+}
+
+$('#saveKeyBtn').addEventListener('click', async ()=>{
+  const key = $('#apiKeyInput').value.trim();
+  settings.model = $('#modelInput').value.trim();
+  saveSettings();
+  setApiKey(key);
+  $('#noKeyNotice').style.display = key ? 'none' : '';
+  const st = $('#keyStatus');
+  if(!key){ st.className='status'; st.textContent = 'Klucz usunięty. Zostaje odczyt kodów kreskowych i OCR.'; return; }
+  st.className = 'status';
+  st.textContent = 'Sprawdzam połączenie z modelem ' + activeModel() + '…';
+  try{
+    const px = document.createElement('canvas');
+    px.width = px.height = 64;
+    const c = px.getContext('2d');
+    c.fillStyle = '#fff'; c.fillRect(0,0,64,64);
+    c.fillStyle = '#000'; c.font = '12px sans-serif'; c.fillText('TEST', 8, 34);
+    await callVision(px.toDataURL('image/jpeg', 0.8));
+    st.className = 'status ok';
+    st.textContent = 'Połączenie działa. Model ' + activeModel() + ' odpowiada.';
+    toast('Klucz zapisany');
+  }catch(err){
+    st.className = 'status err';
+    st.textContent = 'Model nie odpowiedział: ' + err.message + ' — sprawdź klucz, nazwę modelu i limity u dostawcy.';
+  }
+});
+$('#clearKeyBtn').addEventListener('click', ()=>{
+  setApiKey('');
+  $('#apiKeyInput').value = '';
+  $('#noKeyNotice').style.display = '';
+  $('#keyStatus').className = 'status';
+  $('#keyStatus').textContent = 'Klucz usunięty z tej przeglądarki.';
+});
+
+/* ============================================================
+   MODALE
+   ============================================================ */
+const HELP_HTML = `
+<button class="modal-close" data-close>Zamknij</button>
+<h2>Jak to działa</h2>
+<h3>Zdjęcie jednej książki</h3>
+<p>Aplikacja najpierw szuka kodu kreskowego EAN — jeśli go widać, ma od razu pewny numer ISBN. Kiedy kodu nie ma, tytuł czyta model wizyjny (jeśli podałeś klucz) albo lokalny OCR.</p>
+<h3>Zdjęcie kilku książek naraz</h3>
+<p>Ustaw książki obok siebie albo sfotografuj półkę tak, żeby grzbiety były czytelne. Model wypisuje każdy tytuł osobno, wycina miniaturę z kadru i ocenia stan każdego egzemplarza. Wyceny lecą jedna pod drugą — stan każdej możesz poprawić ręcznie.</p>
+<h3>Ocena stanu</h3>
+<p>Model patrzy na przetarcia grzbietu, zagięcia rogów, zabrudzenia i pożółkłe kartki. To ocena z jednego zdjęcia, więc traktuj ją jak podpowiedź: klikając inny stan, natychmiast przeliczasz widełki.</p>
+<h3>Skąd biorą się ceny</h3>
+<p>Punktem wyjścia jest cena katalogowa nowego egzemplarza z Google Books. Gdy jej nie ma, aplikacja szacuje ją po objętości i tematyce. Potem mnoży przez współczynnik stanu, kanał sprzedaży i poprawki na wiek wydania, popularność tytułu oraz objętość.</p>
+<h3>Skróty klawiszowe</h3>
+<p><kbd>1</kbd>–<kbd>5</kbd> przełączają zakładki, <kbd>/</kbd> ustawia kursor w polu ISBN, <kbd>Ctrl</kbd>+<kbd>V</kbd> wkleja zdjęcie ze schowka, <kbd>Esc</kbd> zamyka okno.</p>
+<h3>Publikacja na GitHub Pages</h3>
+<p>Wrzuć ten plik do repozytorium jako <code>index.html</code>, w Settings → Pages wybierz gałąź <code>main</code> i katalog <code>/ (root)</code>. Strona nie potrzebuje żadnego backendu ani kroku budowania. Kamera i skaner wymagają HTTPS, które GitHub Pages daje automatycznie.</p>
+`;
+
+const PRIVACY_HTML = `
+<button class="modal-close" data-close>Zamknij</button>
+<h2>Polityka prywatności</h2>
+<p>Ostatnia aktualizacja: 16 września 2026</p>
+
+<h3>1. Czego dotyczy dokument</h3>
+<p>Kartoteka to aplikacja działająca w całości w przeglądarce. Nie ma własnego serwera ani bazy danych — nie istnieje miejsce, do którego trafiałyby Twoje dane po naszej stronie.</p>
+
+<h3>2. Jakie dane są przetwarzane</h3>
+<table class="data">
+<tr><th>Rodzaj danych</th><th>Cel</th><th>Gdzie trafiają</th></tr>
+<tr><td>Numer ISBN, tytuł, autor</td><td>Pobranie danych bibliograficznych i ceny katalogowej</td><td>Google Books, Open Library</td></tr>
+<tr><td>Zdjęcie książek</td><td>Rozpoznanie tytułów i ocena stanu egzemplarza</td><td>Wybrany dostawca modelu (Google, OpenAI, Anthropic lub OpenRouter) — wyłącznie gdy podasz klucz API</td></tr>
+<tr><td>Obraz z kamery</td><td>Odczyt kodu kreskowego</td><td>Nigdzie — analiza dzieje się w przeglądarce</td></tr>
+<tr><td>Kartoteka, ustawienia, klucz API</td><td>Zapamiętanie wycen między wizytami</td><td>localStorage tego urządzenia</td></tr>
+</table>
+<p>Aplikacja nie wymaga konta, nie prosi o imię, e-mail ani numer telefonu.</p>
+
+<h3>3. Zdjęcia</h3>
+<p>Zdjęcie jest zmniejszane w przeglądarce i wysyłane do dostawcy modelu tylko w momencie kliknięcia „Rozpoznaj i wyceń” i tylko wtedy, gdy zapisałeś klucz API. Bez klucza zdjęcie nie opuszcza urządzenia: kody kreskowe i OCR liczą się lokalnie. Zdjęcia nie są nigdzie przechowywane przez aplikację.</p>
+
+<h3>4. Klucz API</h3>
+<p>Klucz zapisuje się w pamięci lokalnej przeglądarki i jest wysyłany wyłącznie do wybranego dostawcy. Każdy, kto ma dostęp do tego urządzenia i profilu przeglądarki, może go odczytać — na współdzielonym komputerze usuń go przyciskiem w Ustawieniach i ustaw limit wydatków u dostawcy.</p>
+
+<h3>5. Pamięć lokalna</h3>
+<p>Aplikacja nie używa plików cookie. W localStorage trzyma kartotekę, ustawienia, klucz API i podręczny bufor wyników wyszukiwania (wygasa po 30 dniach). Wszystko usuniesz przyciskiem „Wyczyść kartotekę”, „Usuń klucz” albo czyszcząc dane strony w przeglądarce.</p>
+
+<h3>6. Usługi zewnętrzne</h3>
+<p>Google Books, Open Library, Frankfurter (kursy walut), cdnjs i jsDelivr (biblioteki), Google Fonts (kroje pisma) oraz wybrany dostawca modelu widzą adres IP wynikający z połączenia. Dane mogą być przetwarzane poza Europejskim Obszarem Gospodarczym. Każda z tych usług ma własną politykę prywatności, niezależną od tego dokumentu.</p>
+
+<h3>7. Prawa użytkownika</h3>
+<p>Ponieważ aplikacja nie prowadzi rejestru użytkowników, nie ma po naszej stronie danych do wglądu ani usunięcia. W zakresie danych przetwarzanych przez wymienione usługi obowiązują ich własne polityki.</p>
+
+<h3>8. Wiarygodność wycen</h3>
+<p>Widełki są szacunkiem algorytmicznym na podstawie ceny katalogowej i deklarowanego stanu. Nie są ofertą, wyceną rzeczoznawcy ani gwarancją ceny sprzedaży.</p>
+
+<h3>9. Kontakt</h3>
+<p>Pytania kieruj do osoby lub podmiotu, który udostępnił Ci ten plik.</p>
+`;
+
+function openModal(overlay, html){
+  overlay.querySelector('.modal').innerHTML = html;
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModals(){
+  $$('.overlay').forEach(o=>o.classList.remove('active'));
+  document.body.style.overflow = '';
+}
+$('#openPrivacy').addEventListener('click', e=>{ e.preventDefault(); openModal($('#privacyOverlay'), PRIVACY_HTML); });
+$('#openHelp').addEventListener('click', e=>{ e.preventDefault(); openModal($('#helpOverlay'), HELP_HTML); });
+$('#helpBtn').addEventListener('click', ()=> openModal($('#helpOverlay'), HELP_HTML));
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('overlay') || e.target.closest('[data-close]')) closeModals();
+});
+
+/* ============================================================
+   SKRÓTY KLAWISZOWE
+   ============================================================ */
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){ closeModals(); return; }
+  const t = e.target.tagName;
+  if(t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  if(e.key === '/'){ e.preventDefault(); goTab('isbn'); $('#isbnInput').focus(); return; }
+  const i = ['1','2','3','4','5'].indexOf(e.key);
+  if(i >= 0){ goTab(PANELS[i]); }
+});
+
+/* ============================================================
+   PWA — instalowalny skrót bez dodatkowych plików
+   ============================================================ */
+function installManifest(){
+  try{
+    const icon = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="96" fill="#1F4D3D"/>' +
+      '<text x="256" y="330" font-family="Georgia,serif" font-size="260" font-weight="700" fill="#F4F0E6" text-anchor="middle">K</text></svg>'
+    )));
+    const manifest = {
+      name:'Kartoteka — wycena książek',
+      short_name:'Kartoteka',
+      start_url:'.',
+      scope:'.',
+      display:'standalone',
+      background_color:'#F4F0E6',
+      theme_color:'#1F4D3D',
+      description:'Wycena książek ze zdjęcia okładki i po numerze ISBN.',
+      icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'}]
+    };
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
+    document.head.appendChild(link);
+    const fav = document.createElement('link');
+    fav.rel = 'icon'; fav.href = icon;
+    document.head.appendChild(fav);
+    const apple = document.createElement('link');
+    apple.rel = 'apple-touch-icon'; apple.href = icon;
+    document.head.appendChild(apple);
+  }catch(e){}
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+function init(){
+  applyTheme();
+  fillSettings();
+  renderHist();
+  installManifest();
+  $('#versionTag').textContent = 'Kartoteka v' + VERSION;
+  loadFx().then(()=>{ renderHist(); });
+
+  const h = (location.hash||'').replace('#','');
+  goTab(PANELS.includes(h) ? h : 'photo');
+
+  if(!('BarcodeDetector' in window)){
+    // html5-qrcode i tak obsłuży odczyt z pliku, tylko wolniej
+  }
+  window.addEventListener('beforeunload', ()=>{ if(scanner) stopScanner(); });
+}
+
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+})();
+
+</script>
+</body>
+</html>
