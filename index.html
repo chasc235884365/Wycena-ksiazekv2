@@ -1095,23 +1095,37 @@ function distinctCoverage(source, query){
 function quotedTerm(value){ return '"' + String(value || '').replace(/["\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,100) + '"'; }
 
 function buildBookQueries(title, author, extra){
-  const t = String(title || '').replace(/\s+/g,' ').trim().slice(0,120);
-  const a = String(author || '').replace(/\s+/g,' ').trim().slice(0,80);
-  const x = String(extra || '').replace(/\s+/g,' ').trim().slice(0,160);
+  const t = String(title || '').replace(/\s+/g,' ').trim();
+  const a = String(author || '').replace(/\s+/g,' ').trim();
+  const x = String(extra || '').replace(/\s+/g,' ').trim();
   const list = [];
-  if(t && a) list.push('intitle:' + quotedTerm(t) + ' inauthor:' + quotedTerm(a));
-  if(t){
-    list.push('intitle:' + quotedTerm(t));
-    list.push(t + (a ? ' ' + a : ''));
-    const words = distinctWords(t);
-    if(words.length > 3) list.push(words.slice(0,4).join(' ') + (a ? ' ' + a : ''));
+
+  // 1. Luźne wyszukiwanie wszystkich słów bez cudzysłowów
+  const cleanTitle = t.replace(/[:.,\-\/]/g, ' ');
+  if(cleanTitle){
+    list.push(cleanTitle + (a ? ' ' + a : ''));
   }
-  if(x && foldText(x) !== foldText(t)){
-    const words = distinctWords(x).slice(0,6);
-    if(words.length) list.push(words.join(' '));
+
+  // 2. Wyszukiwanie kluczowych słów (pomijamy ogólniki typu 'język')
+  const words = distinctWords(t + ' ' + x);
+  if(words.length >= 2){
+    list.push(words.slice(0, 5).join(' '));
   }
-  if(!t && a) list.push('inauthor:' + quotedTerm(a));
-  return Array.from(new Set(list.filter(q=>q.replace(/[^\p{L}\p{N}]/gu,'').length > 2))).slice(0,4);
+
+  // 3. Wyszukiwanie po intitle bez cudzysłowu (dopuszcza inną kolejność w Google)
+  if(words.length >= 1){
+    list.push('intitle:' + words.slice(0, 3).join(' '));
+  }
+
+  // 4. Pełny kontekst z okładki (w tym wydawnictwo np. WSiP, klasa itp.)
+  if(x && x !== t){
+    const extraWords = distinctWords(x);
+    if(extraWords.length){
+      list.push(extraWords.slice(0, 6).join(' '));
+    }
+  }
+
+  return Array.from(new Set(list.filter(q => q && q.trim().length > 2))).slice(0, 6);
 }
 
 /* ============================================================
