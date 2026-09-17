@@ -750,7 +750,7 @@ kbd{
 </main>
 
 <footer>
-  <p>Dane bibliograficzne: Google Books i Open Library. Kursy walut: Frankfurter (EBC).<br>
+  <p>Dane bibliograficzne: Biblioteka Narodowa, Google Books i Open Library. Kursy walut: Frankfurter.<br>
   Widełki to szacunek na podstawie ceny katalogowej, stanu egzemplarza i typowych spadków wartości na rynku wtórnym. Nie zastępują wyceny rzeczoznawcy ani realnej oferty.</p>
   <p class="noprint"><a href="#" id="openPrivacy">Polityka prywatności</a> · <a href="#" id="openHelp">Jak to działa</a> · <span id="versionTag" class="mono"></span></p>
 </footer>
@@ -771,12 +771,12 @@ kbd{
 (function(){
 'use strict';
 
-const VERSION = '3.0';
+const VERSION = '4.0';
 const LS = {
   hist:'kartoteka.history.v2',
   set:'kartoteka.settings.v2',
   key:'kartoteka.apikey.v2',
-  cache:'kartoteka.cache.v3'
+  cache:'kartoteka.cache.v4'
 };
 
 /* ---------- drobne narzędzia ---------- */
@@ -834,7 +834,8 @@ const DEFAULT_SETTINGS = {
   deepScan:true,     // druga tura modelu na wyciętej okładce
   coverMatch:true,   // porównanie okładki ze zdjęcia z okładką z bazy
   imgProxy:true,     // proxy obrazów (CORS) do porównania okładek
-  strict:true        // odrzucaj słabe dopasowania zamiast zgadywać
+  strict:true,        // odrzucaj słabe dopasowania zamiast zgadywać
+  bnDirect:true       // używaj oficjalnego API Biblioteki Narodowej bez pośrednika
 };
 let settings = Object.assign({}, DEFAULT_SETTINGS, readLS(LS.set, {}));
 function saveSettings(){ writeLS(LS.set, settings); }
@@ -965,6 +966,12 @@ function fromPln(amountPln){
   const rate = fxRates[cur] || 1;
   return amountPln / rate;
 }
+function moneyIn(amountPln, cur){
+  const rate = fxRates[cur] || 1;
+  const v = amountPln / rate;
+  const digits = v < 20 ? 1 : 0;
+  return v.toFixed(digits).replace('.', ',');
+}
 function money(amountPln){
   const v = fromPln(amountPln);
   const digits = v < 20 ? 1 : 0;
@@ -1011,23 +1018,55 @@ async function fetchJson(url, opts, timeoutMs){
    Nie polegamy więc na dokładnej frazie — porównujemy słowa, tolerujemy
    literówki, a o ostatecznym wyborze wydania decyduje podobieństwo okładki.
    ============================================================ */
-const SEARCH_STOP_WORDS = new Set(['a','i','w','z','do','na','od','oraz','the','and','of','for','dla','po','przez']);
-
-/* Słowa, które same z siebie nie są tytułem książki — na okładce
-   podręcznika jest ich pełno i to one psuły wcześniej wyszukiwanie. */
-const GENERIC_TOKENS = new Set([
-  'podrecznik','podreczniki','cwiczenia','zeszyt','zbior','zadan','atlas','repetytorium',
-  'zakres','podstawowy','rozszerzony','poziom','klasa','klasy','czesc','czesci','tom','tomy',
-  'liceum','technikum','szkola','szkoly','podstawowej','gimnazjum','edukacja','nauka',
-  'wydanie','nowe','nowa','wyd','egzamin','matura','maturalne','testy','wzory','sprawdziany',
-  'ksiazka','ksiazki','ilustrowana','kolor','seria','biblioteka','wydawnictwo','wydawnictwa',
-  'reforma','program','nauczania','material','materialy','dla','uczniow','ucznia','nauczyciela'
+const SEARCH_STOP_WORDS = new Set([
+  'a','i','w','z','do','na','od','oraz','the','and','of','for','dla','po','przez','ze','za','u','o'
 ]);
+
+/*
+ * Nie traktujemy już terminów edukacyjnych jako śmieci. Są sygnałami
+ * rozróżniającymi wydania: klasa, zakres, liceum, technikum, wydawnictwo,
+ * podręcznik, MEN itd. Usuwamy wyłącznie słowa o małej wartości indeksowej.
+ */
+const SOFT_NOISE_TOKENS = new Set([
+  'wydanie','wyd','nowe','nowa','nowy','ksiazka','ksiazki','ilustrowana','kolor',
+  'material','materialy','dla','uczniow','ucznia','nauczyciela','publikacja','publikacje'
+]);
+const EDUCATION_TOKENS = new Set([
+  'podrecznik','podreczniki','cwiczenia','cwiczenie','zeszyt','zeszytowe','zbior','zadan',
+  'repetytorium','atlas','zakres','podstawowy','rozszerzony','poziom','klasa','klasy',
+  'czesc','czesci','tom','tomy','liceum','technikum','szkola','szkoly','podstawowej',
+  'gimnazjum','edukacja','nauczania','nauka','egzamin','matura','maturalne','testy',
+  'wzory','sprawdziany','program','reforma','men','dopuszczenia','kwalifikacja','zawodowy',
+  'branżowa','branzowa','szkolny','szkolna','szkolne','uczen','uczniowie'
+]);
+const EDU_PUBLISHERS = [
+  {key:'wsip', label:'WSiP', re:/\bwsi?p\b|wydawnictwo szkolne i pedagogiczne|szkolne i pedagogiczne/i},
+  {key:'nowa-era', label:'Nowa Era', re:/\bnowa\s+era\b/i},
+  {key:'operon', label:'Operon', re:/\boperon\b|wydawnictwo pedagogiczne operon/i},
+  {key:'gwo', label:'GWO', re:/\bgwo\b|gdańskie wydawnictwo oświatowe|gdanskie wydawnictwo oswiatowe/i},
+  {key:'pwn', label:'PWN', re:/\bpwn\b|wydawnictwo naukowe pwn/i},
+  {key:'pearson', label:'Pearson', re:/\bpearson\b/i},
+  {key:'macmillan', label:'Macmillan', re:/\bmacmillan\b/i},
+  {key:'oxford', label:'Oxford', re:/\boxford\b/i},
+  {key:'zamkor', label:'ZamKor', re:/\bzamkor\b/i},
+  {key:'greg', label:'Greg', re:/\bgreg\b/i},
+  {key:'mac', label:'MAC', re:/\bmac\b|mac edukacja/i},
+  {key:'wiking', label:'Wiking', re:/\bwiking\b/i}
+];
+const SUBJECT_PATTERNS = [
+  ['matematyka',/\bmatematyka\b/i],['jezyk-polski',/język\s+polski|j\.?\s*polski/i],
+  ['historia',/\bhistoria\b/i],['geografia',/\bgeografia\b/i],['biologia',/\bbiologia\b/i],
+  ['chemia',/\bchemia\b/i],['fizyka',/\bfizyka\b/i],['informatyka',/\binformatyka\b/i],
+  ['wos',/\bwiedza\s+o\s+społeczeństwie\b|\bwos\b/i],['angielski',/język\s+angielski|j\.?\s*angielski|angielski/i],
+  ['niemiecki',/język\s+niemiecki|j\.?\s*niemiecki|niemiecki/i],['francuski',/język\s+francuski|francuski/i],
+  ['hiszpanski',/język\s+hiszpański|język\s+hiszpanski|hiszpański|hiszpanski/i],
+  ['biznes',/podstawy\s+przedsiębiorczości|biznes|ekonomia/i],['technologia',/technologia|elektronika|mechanika|mechatronika/i]
+];
 
 function foldText(value){
   return String(value || '')
     .toLocaleLowerCase('pl-PL')
-    .replace(/ł/g,'l')                       // ł nie rozkłada się przez NFD
+    .replace(/ł/g,'l')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9]+/g,' ').trim();
 }
@@ -1036,96 +1075,139 @@ function searchTokens(value){
   const useful = all.filter(w=>w.length > 1 && !SEARCH_STOP_WORDS.has(w));
   return Array.from(new Set(useful.length ? useful : all));
 }
-/* czy fraza składa się wyłącznie z ogólników typu "podręcznik do liceum" */
-function isGenericText(value){
-  const t = searchTokens(value).filter(w=>w.length>1 && !/^\d+$/.test(w));
-  if(!t.length) return true;
-  return t.every(w=>GENERIC_TOKENS.has(w));
-}
 function distinctTokens(value){
-  return searchTokens(value).filter(w=>!GENERIC_TOKENS.has(w) && w.length>2);
+  return searchTokens(value).filter(w=>!SOFT_NOISE_TOKENS.has(w) && w.length>2);
 }
-/* to samo, ale zwraca słowa w oryginalnej pisowni — do zapytań do baz */
 function distinctWords(value){
   const seen = new Set();
   return String(value || '').split(/\s+/)
     .map(w=>w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,''))
     .filter(w=>{
       const f = foldText(w);
-      if(!f || f.length < 3 || GENERIC_TOKENS.has(f) || SEARCH_STOP_WORDS.has(f) || seen.has(f)) return false;
+      if(!f || f.length<3 || SOFT_NOISE_TOKENS.has(f) || SEARCH_STOP_WORDS.has(f) || seen.has(f)) return false;
       seen.add(f); return true;
     });
 }
+function extractMenNumber(text){
+  const raw = String(text || '');
+  const m = raw.match(/\b(?:MEN|NR\.?\s*DOPUSZCZENIA(?:\s*MEN)?)\s*[-.:#№\s]*([0-9]{2,6}(?:\/[0-9A-Z]{1,6}){1,3})\b/i);
+  if(m) return m[1];
+  const m2 = raw.match(/\b([0-9]{2,6}\/[0-9]{1,6}\/20\d{2})\b/);
+  return m2 ? m2[1] : null;
+}
+function extractClassLevel(text){
+  const raw=String(text||'');
+  let m=raw.match(/\b(?:klasa|kl\.?)[\s\-:]*(\d{1,2})\b/i);
+  if(m) return Number(m[1]);
+  m=raw.match(/\b(\d{1,2})\s*(?:klasa|kl\.)\b/i);
+  if(m) return Number(m[1]);
+  return null;
+}
+function normalizePublisherKey(text){
+  const raw=String(text||'');
+  for(const p of EDU_PUBLISHERS) if(p.re.test(raw)) return p.key;
+  return null;
+}
+function extractEducationSignals(value){
+  const raw=String(value || '');
+  const folded=foldText(raw);
+  const publishers=EDU_PUBLISHERS.filter(p=>p.re.test(raw));
+  let subject=null;
+  for(const [key,re] of SUBJECT_PATTERNS){ if(re.test(raw)){ subject=key; break; } }
+  const classLevel=extractClassLevel(raw);
+  const menNumber=extractMenNumber(raw);
+  const year=parseYear(raw);
+  const scope=/\brozszerzon(?:y|ego|ym|e)\b/i.test(raw) ? 'rozszerzony' :
+    (/\bpodstawow(?:y|ego|ym|e|a|ej)\b/i.test(raw) ? 'podstawowy' : null);
+  const schoolType=/\bliceum\b/i.test(raw) ? 'liceum' :
+    (/\btechnikum\b/i.test(raw) ? 'technikum' :
+    (/\bszkoła\s+podstawowa|szkoły\s+podstawowej|podstawowa\b/i.test(raw) ? 'szkoła podstawowa' :
+    (/\bbranżow(?:a|ej|y)\b|\bbranzow(?:a|ej|y)\b/i.test(raw) ? 'branżowa' : null)));
+  const isTextbook = EDUCATION_TOKENS.has('podrecznik') && /\bpodr[ęe]cznik/i.test(raw) ||
+    /\b(?:ćwiczenia|cwiczenia|zeszyt ćwiczeń|zeszyt cwiczen|matura|egzamin|nr\.?\s*dopuszczenia|MEN)\b/i.test(raw);
+  const publisherKey=publishers.length ? publishers[0].key : normalizePublisherKey(raw);
+  return {
+    isTextbook:!!isTextbook,
+    publisherKey,
+    publisherLabel:publishers.length ? publishers[0].label : null,
+    publisherKeys:publishers.map(p=>p.key),
+    classLevel,
+    menNumber,
+    subject,
+    scope,
+    schoolType,
+    year,
+    educationSignalCount:[isTextbook,classLevel!=null,menNumber,subject,scope,schoolType,publisherKey].filter(Boolean).length,
+    text:raw,
+    folded:folded
+  };
+}
+function isGenericText(value){
+  const t=searchTokens(value).filter(w=>w.length>1 && !/^\d+$/.test(w));
+  if(!t.length) return true;
+  /* Samo "podręcznik / klasa / zakres / liceum" jest kontekstem, nie tytułem.
+     Edukacyjne tokeny nadal są zachowywane w zapytaniu i scoringu. */
+  const content=t.filter(w=>!SOFT_NOISE_TOKENS.has(w) && !EDUCATION_TOKENS.has(w));
+  return content.length===0;
+}
+function isEducationalText(value){
+  const e=extractEducationSignals(value);
+  return e.educationSignalCount >= 1;
+}
 function editDistanceAtMost(a, b, max){
-  if(Math.abs(a.length-b.length) > max) return max + 1;
-  let prev = Array.from({length:b.length+1}, (_,i)=>i);
+  if(Math.abs(a.length-b.length)>max) return max+1;
+  let prev=Array.from({length:b.length+1},(_,i)=>i);
   for(let i=1;i<=a.length;i++){
-    const row = [i]; let best = row[0];
+    const row=[i]; let best=row[0];
     for(let j=1;j<=b.length;j++){
-      const v = Math.min(prev[j]+1, row[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      const v=Math.min(prev[j]+1,row[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
       row.push(v); if(v<best) best=v;
     }
-    if(best > max) return max + 1;
-    prev = row;
+    if(best>max) return max+1;
+    prev=row;
   }
   return prev[b.length];
 }
-function sameSearchToken(a, b){
-  if(a === b) return true;
-  if(a.length < 5 || b.length < 5) return false;
-  const max = Math.max(a.length,b.length) >= 9 ? 2 : 1;
-  return editDistanceAtMost(a,b,max) <= max;
+function sameSearchToken(a,b){
+  if(a===b) return true;
+  if(a.length<5 || b.length<5) return false;
+  const max=Math.max(a.length,b.length)>=9 ? 2 : 1;
+  return editDistanceAtMost(a,b,max)<=max;
 }
-function tokenOverlap(source, query){
-  const a = searchTokens(source), b = searchTokens(query);
-  if(!a.length || !b.length) return 0;
-  const hits = a.filter(x=>b.some(y=>sameSearchToken(x,y))).length;
-  return Math.max(hits/a.length, hits/b.length);
+function tokenOverlap(source,query){
+  const a=searchTokens(source), b=searchTokens(query);
+  if(!a.length||!b.length) return 0;
+  const hits=a.filter(x=>b.some(y=>sameSearchToken(x,y))).length;
+  return Math.max(hits/a.length,hits/b.length);
 }
-/* Ile znaczących (nie-ogólnikowych) słów zapytania faktycznie wystąpiło
-   w tytule znaleziska. To ta miara blokuje wynik "Matematyka 1" dla
-   zapytania "podręcznik do liceum i technikum". */
-function distinctCoverage(source, query){
-  const q = distinctTokens(query);
+function distinctCoverage(source,query){
+  const q=distinctTokens(query);
   if(!q.length) return 0;
-  const s = searchTokens(source);
-  const hits = q.filter(x=>s.some(y=>sameSearchToken(x,y))).length;
-  return hits / q.length;
+  const s=searchTokens(source);
+  const hits=q.filter(x=>s.some(y=>sameSearchToken(x,y))).length;
+  return hits/q.length;
 }
-function quotedTerm(value){ return '"' + String(value || '').replace(/["\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,100) + '"'; }
+function quotedTerm(value){ return '"'+String(value||'').replace(/["\\]/g,' ').replace(/\s+/g,' ').trim().slice(0,100)+'"'; }
 
-function buildBookQueries(title, author, extra){
-  const t = String(title || '').replace(/\s+/g,' ').trim();
-  const a = String(author || '').replace(/\s+/g,' ').trim();
-  const x = String(extra || '').replace(/\s+/g,' ').trim();
-  const list = [];
-
-  // 1. Luźne wyszukiwanie wszystkich słów bez cudzysłowów
-  const cleanTitle = t.replace(/[:.,\-\/]/g, ' ');
-  if(cleanTitle){
-    list.push(cleanTitle + (a ? ' ' + a : ''));
+function buildBookQueries(title,author,extra,education){
+  const t=String(title||'').replace(/\s+/g,' ').trim();
+  const a=String(author||'').replace(/\s+/g,' ').trim();
+  const x=String(extra||'').replace(/\s+/g,' ').trim();
+  const e=education || extractEducationSignals([t,a,x].filter(Boolean).join(' '));
+  const list=[];
+  const cleanTitle=t.replace(/[:.,\-\/]/g,' ');
+  if(cleanTitle) list.push(cleanTitle+(a?' '+a:''));
+  if(t) list.push('intitle:'+quotedTerm(t));
+  const words=distinctWords(t+' '+x);
+  if(words.length>=2) list.push(words.slice(0,8).join(' '));
+  if(e.publisherLabel) list.push('inpublisher:'+quotedTerm(e.publisherLabel)+' '+(t||words.slice(0,4).join(' ')));
+  if(a) list.push('inauthor:'+quotedTerm(a)+' '+(t||words.slice(0,4).join(' ')));
+  if(e.subject) list.push('subject:'+quotedTerm(e.subject)+' '+(t||words.slice(0,4).join(' ')));
+  if(x && x!==t){
+    const extraWords=distinctWords(x);
+    if(extraWords.length) list.push(extraWords.slice(0,8).join(' '));
   }
-
-  // 2. Wyszukiwanie kluczowych słów (pomijamy ogólniki typu 'język')
-  const words = distinctWords(t + ' ' + x);
-  if(words.length >= 2){
-    list.push(words.slice(0, 5).join(' '));
-  }
-
-  // 3. Wyszukiwanie po intitle bez cudzysłowu (dopuszcza inną kolejność w Google)
-  if(words.length >= 1){
-    list.push('intitle:' + words.slice(0, 3).join(' '));
-  }
-
-  // 4. Pełny kontekst z okładki (w tym wydawnictwo np. WSiP, klasa itp.)
-  if(x && x !== t){
-    const extraWords = distinctWords(x);
-    if(extraWords.length){
-      list.push(extraWords.slice(0, 6).join(' '));
-    }
-  }
-
-  return Array.from(new Set(list.filter(q => q && q.trim().length > 2))).slice(0, 6);
+  return Array.from(new Set(list.filter(q=>q&&q.trim().length>2))).slice(0,4);
 }
 
 /* ============================================================
@@ -1208,394 +1290,416 @@ async function remoteCoverSignature(url){
 }
 
 /* ============================================================
-   ŹRÓDŁA DANYCH: Google Books + Open Library
+   ŹRÓDŁA DANYCH: Biblioteka Narodowa + Google Books + Open Library
+   BN jest źródłem priorytetowym dla polskich rekordów, bez proxy.
    ============================================================ */
-async function googleBooks(query, maxResults){
-  const limit = Math.max(1, Math.min(40, Number(maxResults) || 20));
-  const url = 'https://www.googleapis.com/books/v1/volumes?maxResults=' + limit + '&q=' + encodeURIComponent(query);
-  try{
-    const d = await fetchJson(url);
-    return (d.items && d.items.length) ? d.items : [];
-  }catch(e){ return []; }
+const BN_API='https://data.bn.org.pl/api/institutions/bibs.json';
+const BN_CATALOG='https://data.bn.org.pl/bibs';
+
+async function googleBooks(query,maxResults){
+  const limit=Math.max(1,Math.min(40,Number(maxResults)||20));
+  const url='https://www.googleapis.com/books/v1/volumes?maxResults='+limit+'&q='+encodeURIComponent(query);
+  try{ const d=await fetchJson(url,{headers:{Accept:'application/json'}},18000); return d.items&&d.items.length?d.items:[]; }
+  catch(e){ return []; }
 }
 async function openLibraryByIsbn(isbn){
-  const d = await fetchJson('https://openlibrary.org/api/books?bibkeys=ISBN:'+isbn+'&format=json&jscmd=data');
-  return d['ISBN:'+isbn] || null;
-}
-async function openLibrarySearch(title, author){
-  const q = new URLSearchParams();
-  if(title) q.set('title', title); else return [];
-  if(author) q.set('author', author);
-  q.set('limit','20');
-  const d = await fetchJson('https://openlibrary.org/search.json?' + q.toString());
-  return (d.docs && d.docs.length) ? d.docs : [];
-}
-
-   async function bnByIsbn(isbn){
-  if(!isbn) return null;
-  const clean = cleanIsbn(isbn);
-  const targetUrl = 'https://data.bn.org.pl/api/bibs.json?isbnIssn=' + encodeURIComponent(clean);
-  const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
-  
+  const clean=cleanIsbn(isbn);
+  if(!clean) return [];
   try{
-    const r = await fetch(proxyUrl);
-    if(!r.ok) return null;
-    const d = await r.json();
-    if(!d.bibs || !d.bibs.length) return null;
-    const b = d.bibs[0];
-    return {
-      isbn: clean,
-      title: b.title || 'Tytuł nieznany',
-      authors: b.author || 'Autor nieznany',
-      publisher: b.publisher || null,
-      year: parseYear(b.publicationYear),
-      pages: null,
-      language: 'pl',
-      categories: null,
-      ratingsCount: 0,
-      averageRating: null,
-      cover: 'https://covers.openlibrary.org/b/isbn/' + clean + '-L.jpg?default=false',
-      listPrice: null,
-      retailPrice: null,
-      infoLink: 'https://katalogi.bn.org.pl/',
-      source: 'Biblioteka Narodowa',
-      matchScore: 1
-    };
-  }catch(e){
-    return null;
-  }
-}
-
-async function bnSearch(title, author){
-  if(!title) return [];
+    const d=await fetchJson('https://openlibrary.org/search.json?isbn='+encodeURIComponent(clean)+'&limit=5&fields=key,title,author_name,publisher,first_publish_year,isbn,number_of_pages_median,cover_i,language',{},18000);
+    if(d.docs&&d.docs.length) return d.docs;
+  }catch(e){}
   try{
-    const q = new URLSearchParams();
-    q.set('title', title);
-    if(author) q.set('author', author);
-    q.set('limit', '10');
-    const d = await fetchJson('https://data.bn.org.pl/api/bibs.json?' + q.toString());
-    if(!d.bibs || !d.bibs.length) return [];
-    return d.bibs.map(b=>{
-      const rawIsbn = b.isbnIssn ? cleanIsbn(b.isbnIssn.split(' ')[0]) : null;
-      const isbn = rawIsbn ? normalizeIsbn(rawIsbn) : null;
-      return {
-        isbn,
-        title: b.title || 'Tytuł nieznany',
-        authors: b.author || 'Autor nieznany',
-        publisher: b.publisher || null,
-        year: parseYear(b.publicationYear),
-        pages: null,
-        language: 'pl',
-        categories: null,
-        ratingsCount: 0,
-        averageRating: null,
-        cover: isbn ? ('https://covers.openlibrary.org/b/isbn/' + isbn + '-L.jpg?default=false') : null,
-        listPrice: null,
-        retailPrice: null,
-        infoLink: 'https://katalogi.bn.org.pl/',
-        source: 'Biblioteka Narodowa',
-        matchScore: 0
-      };
-    });
+    return [await fetchJson('https://openlibrary.org/isbn/'+encodeURIComponent(clean)+'.json',{},18000)];
   }catch(e){ return []; }
 }
-   
+async function openLibrarySearch(title,author,publisher){
+  if(!title) return [];
+  const q=new URLSearchParams();
+  q.set('title',title);
+  if(author) q.set('author',author);
+  if(publisher) q.set('publisher',publisher);
+  q.set('limit','25');
+  q.set('fields','key,title,author_name,publisher,first_publish_year,isbn,number_of_pages_median,cover_i,language');
+  try{
+    const d=await fetchJson('https://openlibrary.org/search.json?'+q.toString(),{},18000);
+    return d.docs&&d.docs.length?d.docs:[];
+  }catch(e){ return []; }
+}
+
+async function bnRequest(params){
+  if(!settings.bnDirect) return null;
+  const q=new URLSearchParams(params||{});
+  if(!q.has('limit')) q.set('limit','25');
+  if(!q.has('kind')) q.set('kind','książka');
+  const url=BN_API+'?'+q.toString();
+  try{
+    /* Bez proxy: GitHub Pages może korzystać tylko z CORS wystawionego przez BN. */
+    return await fetchJson(url,{mode:'cors',headers:{Accept:'application/json'}},18000);
+  }catch(e){ return null; }
+}
+function extractBnPrice(record){
+  if(!record) return null;
+  const direct=[record.price,record.catalogPrice,record.listPrice].find(v=>v!=null);
+  if(direct!=null){
+    const m=String(direct).replace(',','.').match(/([0-9]+(?:\.[0-9]{1,2})?)/);
+    if(m) return Number(m[1]);
+  }
+  const marc=typeof record.marc==='string'?record.marc:JSON.stringify(record.marc||'');
+  const m=marc.match(/(?:c|price|zł|zl)\s*([0-9]{1,4}(?:[.,][0-9]{1,2})?)/i);
+  return m?Number(String(m[1]).replace(',','.')):null;
+}
+function metaFromBnRecord(b){
+  const rawIsbns=String(b&&b.isbnIssn||'').split(/[\s,;]+/).filter(Boolean);
+  const isbn=rawIsbns.map(v=>normalizeIsbn(v)).find(Boolean)||null;
+  const title=b&&b.title||'Tytuł nieznany';
+  const authors=b&&b.author||'Autor nieznany';
+  const pub=b&&b.publisher||null;
+  const context=[title,authors,pub,b&&b.subject,b&&b.domain,b&&b.genre,b&&b.audienceGroup,b&&b.formOfWork].filter(Boolean).join(' ');
+  const price=extractBnPrice(b);
+  return enrichMeta({
+    isbn,title,authors,publisher:pub,year:parseYear(b&&b.publicationYear),pages:parsePages(b&&b.formOfWork||'')||null,
+    language:(String(b&&b.language||'').toLowerCase()==='polski'||/^pol/.test(String(b&&b.language||'')))?'pl':null,
+    categories:[b&&b.domain,b&&b.subject,b&&b.genre,b&&b.formOfWork].filter(Boolean).map(String),
+    ratingsCount:0,averageRating:null,cover:isbn?('https://covers.openlibrary.org/b/isbn/'+isbn+'-L.jpg?default=false'):null,
+    listPrice:price?{amount:price,currency:'PLN'}:null,retailPrice:null,
+    infoLink:BN_CATALOG,source:'Biblioteka Narodowa',matchScore:0,
+    bnId:b&&b.id||null,nationalBibliographyNumber:b&&b.nationalBibliographyNumber||null,
+    bnDomain:b&&b.domain||null,bnSubject:b&&b.subject||null
+  },context);
+}
+async function bnByIsbn(isbn){
+  const clean=cleanIsbn(isbn); if(!clean) return [];
+  const d=await bnRequest({isbnIssn:clean,limit:'30'});
+  if(!d||!d.bibs||!d.bibs.length) return [];
+  return d.bibs.map(metaFromBnRecord);
+}
+async function bnSearch(title,author,publisher,education){
+  if(!title) return [];
+  const params={title:title,limit:'50',kind:'książka'};
+  if(author) params.author=author;
+  if(publisher) params.publisher=publisher;
+  if(education&&education.subject) params.subject=education.subject;
+  const d=await bnRequest(params);
+  if(!d||!d.bibs||!d.bibs.length) return [];
+  return d.bibs.map(metaFromBnRecord);
+}
+
 function scoreVolume(item){
-  const vi = item.volumeInfo||{}, si = item.saleInfo||{};
-  let s = 0;
-  if(vi.industryIdentifiers) s += 3;
-  if(si.listPrice) s += 4;
-  if(vi.imageLinks) s += 2;
-  if(vi.pageCount) s += 1;
-  if(vi.language === 'pl') s += 2;
+  const vi=item.volumeInfo||{},si=item.saleInfo||{}; let s=0;
+  if(vi.industryIdentifiers) s+=3;
+  if(si.listPrice) s+=3;
+  if(vi.imageLinks) s+=2;
+  if(vi.pageCount) s+=1;
+  if(vi.language==='pl') s+=2;
+  if(vi.publisher) s+=1;
   return s;
 }
-function parseYear(v){
-  if(!v) return null;
-  const m = String(v).match(/(1[5-9]\d{2}|20\d{2})/);
-  return m ? Number(m[1]) : null;
+function parsePages(v){
+  const m=String(v||'').match(/(\d{2,5})\s*(?:str\.?|strona|s\.|pages?)/i); return m?Number(m[1]):null;
 }
-function pickCover(isbn13, gbInfo, olData){
-  const gb = gbInfo && gbInfo.imageLinks;
-  if(gb){
-    const u = gb.extraLarge || gb.large || gb.medium || gb.thumbnail || gb.smallThumbnail;
-    if(u) return u.replace(/^http:/,'https:').replace(/&edge=curl/,'');
-  }
-  if(olData && olData.cover && (olData.cover.large || olData.cover.medium)) return olData.cover.large || olData.cover.medium;
-  if(isbn13) return 'https://covers.openlibrary.org/b/isbn/' + isbn13 + '-L.jpg?default=false';
+function parseYear(v){
+  if(!v) return null; const m=String(v).match(/(1[5-9]\d{2}|20\d{2})/); return m?Number(m[1]):null;
+}
+function pickCover(isbn13,gbInfo,olData){
+  const gb=gbInfo&&gbInfo.imageLinks;
+  if(gb){ const u=gb.extraLarge||gb.large||gb.medium||gb.thumbnail||gb.smallThumbnail; if(u) return u.replace(/^http:/,'https:').replace(/&edge=curl/,''); }
+  if(olData&&olData.cover&&(olData.cover.large||olData.cover.medium)) return olData.cover.large||olData.cover.medium;
+  if(olData&&olData.cover_i) return 'https://covers.openlibrary.org/b/id/'+olData.cover_i+'-L.jpg';
+  if(isbn13) return 'https://covers.openlibrary.org/b/isbn/'+isbn13+'-L.jpg?default=false';
   return null;
 }
-
-function metaFromGoogle(item, ol){
-  const vi = item.volumeInfo || {}, si = item.saleInfo || {};
-  let isbn = null;
-  if(vi.industryIdentifiers){
-    const i13 = vi.industryIdentifiers.find(x=>x.type==='ISBN_13');
-    const i10 = vi.industryIdentifiers.find(x=>x.type==='ISBN_10');
-    isbn = i13 ? i13.identifier : (i10 ? normalizeIsbn(i10.identifier) : null);
-  }
-  return {
-    isbn,
-    title: vi.title ? (vi.title + (vi.subtitle ? '. ' + vi.subtitle : '')) : ((ol && ol.title) || 'Tytuł nieznany'),
-    authors: (vi.authors && vi.authors.join(', ')) || (ol && ol.authors && ol.authors.map(a=>a.name).join(', ')) || 'Autor nieznany',
-    publisher: vi.publisher || (ol && ol.publishers && ol.publishers[0] && ol.publishers[0].name) || null,
-    year: parseYear(vi.publishedDate || (ol && ol.publish_date)),
-    pages: vi.pageCount || (ol && ol.number_of_pages) || null,
-    language: vi.language || null,
-    categories: vi.categories || null,
-    ratingsCount: vi.ratingsCount || 0,
-    averageRating: vi.averageRating || null,
-    cover: pickCover(isbn, vi, ol),
-    listPrice: (si.listPrice && si.listPrice.amount) ? {amount:si.listPrice.amount, currency:si.listPrice.currencyCode} : null,
-    retailPrice: (si.retailPrice && si.retailPrice.amount) ? {amount:si.retailPrice.amount, currency:si.retailPrice.currencyCode} : null,
-    infoLink: vi.infoLink || null,
-    source: 'Google Books',
-    matchScore: 0
-  };
+function enrichMeta(meta,extraContext){
+  const context=[meta&&meta.title,meta&&meta.authors,meta&&meta.publisher,meta&&meta.year,meta&&meta.series,meta&&meta.level,meta&&meta.subject,meta&&meta.menNumber,extraContext].filter(Boolean).join(' ');
+  const education=extractEducationSignals(context);
+  meta=Object.assign({
+    isbn:null,title:'Tytuł nieznany',authors:'Autor nieznany',publisher:null,year:null,pages:null,language:null,
+    categories:null,ratingsCount:0,averageRating:null,cover:null,listPrice:null,retailPrice:null,infoLink:null,
+    source:'',matchScore:0
+  },meta||{});
+  /* Rok wydania bierzemy z rekordu/odczytu pola year, nie z przypadkowego numeru MEN. */
+  if(!meta.year) meta.year=null;
+  if(!meta.publisher && education.publisherLabel) meta.publisher=education.publisherLabel;
+  meta.education=Object.assign({},education,{
+    isTextbook:meta.education&&typeof meta.education.isTextbook==='boolean' ? meta.education.isTextbook||education.isTextbook : education.isTextbook,
+    publisherKey:meta.education&&meta.education.publisherKey||education.publisherKey,
+    publisherLabel:meta.publisher||education.publisherLabel
+  });
+  meta.menNumber=meta.menNumber||education.menNumber||null;
+  meta.subject=meta.subject||education.subject||null;
+  meta.level=meta.level||null;
+  meta.series=meta.series||null;
+  meta.programStatus=meta.education.isTextbook ? (meta.year&&meta.year>=new Date().getFullYear()-2?'nowsze wydanie — zgodność programu do sprawdzenia':'starsze wydanie — zgodność programu do sprawdzenia') : null;
+  return meta;
+}
+function metaFromGoogle(item,ol){
+  const vi=item.volumeInfo||{},si=item.saleInfo||{}; let isbn=null;
+  if(vi.industryIdentifiers){ const i13=vi.industryIdentifiers.find(x=>x.type==='ISBN_13'); const i10=vi.industryIdentifiers.find(x=>x.type==='ISBN_10'); isbn=i13?normalizeIsbn(i13.identifier):(i10?normalizeIsbn(i10.identifier):null); }
+  return enrichMeta({
+    isbn,title:vi.title?(vi.title+(vi.subtitle?'. '+vi.subtitle:'')):((ol&&ol.title)||'Tytuł nieznany'),
+    authors:(vi.authors&&vi.authors.join(', '))||(ol&&ol.author_name&&ol.author_name.join(', '))||(ol&&ol.authors&&ol.authors.map(a=>a.name||a).join(', '))||'Autor nieznany',
+    publisher:vi.publisher||(ol&&ol.publisher&&ol.publisher[0])||(ol&&ol.publishers&&ol.publishers[0]&&ol.publishers[0].name)||null,
+    year:parseYear(vi.publishedDate||(ol&&ol.first_publish_year)||(ol&&ol.publish_date)),
+    pages:vi.pageCount||(ol&&ol.number_of_pages_median)||(ol&&ol.number_of_pages)||null,
+    language:vi.language||(((ol&&ol.language)||[]).includes('pol')?'pl':null),categories:vi.categories||null,
+    ratingsCount:vi.ratingsCount||0,averageRating:vi.averageRating||null,cover:pickCover(isbn,vi,ol),
+    listPrice:(si.listPrice&&si.listPrice.amount)?{amount:si.listPrice.amount,currency:si.listPrice.currencyCode}:null,
+    retailPrice:(si.retailPrice&&si.retailPrice.amount)?{amount:si.retailPrice.amount,currency:si.retailPrice.currencyCode}:null,
+    infoLink:vi.infoLink||null,source:'Google Books',matchScore:0
+  }, [vi.title,vi.subtitle,vi.publisher,vi.categories].filter(Boolean).join(' '));
 }
 function metaFromOpenLibrary(doc){
-  const isbn = (doc.isbn && doc.isbn.length) ? (normalizeIsbn(doc.isbn.find(x=>x.length===13) || doc.isbn[0]) || null) : null;
-  return {
-    isbn,
-    title: doc.title || 'Tytuł nieznany',
-    authors: (doc.author_name || []).join(', ') || 'Autor nieznany',
-    publisher: (doc.publisher || [])[0] || null,
-    year: doc.first_publish_year || null,
-    pages: doc.number_of_pages_median || null,
-    language: (doc.language || [])[0] === 'pol' ? 'pl' : null,
-    categories: null,
-    ratingsCount: 0,
-    averageRating: null,
-    cover: doc.cover_i ? ('https://covers.openlibrary.org/b/id/' + doc.cover_i + '-L.jpg') : (isbn ? 'https://covers.openlibrary.org/b/isbn/'+isbn+'-L.jpg?default=false' : null),
-    listPrice: null,
-    retailPrice: null,
-    infoLink: doc.key ? ('https://openlibrary.org' + doc.key) : null,
-    source: 'Open Library',
-    matchScore: 0
-  };
+  const isbn=doc&&doc.isbn&&doc.isbn.length ? (normalizeIsbn(doc.isbn.find(x=>String(x).length===13)||doc.isbn[0])||null):null;
+  return enrichMeta({
+    isbn,title:doc&&doc.title||'Tytuł nieznany',authors:(doc&&doc.author_name||[]).join(', ')||((doc&&doc.authors||[]).map(a=>a.name||'').filter(Boolean).join(', '))||'Autor nieznany',
+    publisher:(doc&&doc.publisher||[])[0]||((doc&&doc.publishers||[])[0]&&((doc.publishers[0].name||doc.publishers[0])) )||null,
+    year:(doc&&doc.first_publish_year)||parseYear(doc&&doc.publish_date),pages:doc&&doc.number_of_pages_median||doc&&doc.number_of_pages||null,
+    language:(doc&&doc.language||[]).includes('pol')?'pl':null,categories:null,ratingsCount:0,averageRating:null,
+    cover:doc&&doc.cover_i?('https://covers.openlibrary.org/b/id/'+doc.cover_i+'-L.jpg'):(isbn?'https://covers.openlibrary.org/b/isbn/'+isbn+'-L.jpg?default=false':null),
+    listPrice:null,retailPrice:null,infoLink:doc&&doc.key?('https://openlibrary.org'+doc.key):null,source:'Open Library',matchScore:0
+  },[doc&&doc.title,(doc&&doc.publisher||[]).join(' ')].filter(Boolean).join(' '));
 }
-function metaFromOlData(ol, isbn){
-  return {
-    isbn: isbn || null,
-    title: ol.title || 'Tytuł nieznany',
-    authors: (ol.authors || []).map(a=>a.name).join(', ') || 'Autor nieznany',
-    publisher: (ol.publishers || [])[0] ? ol.publishers[0].name : null,
-    year: parseYear(ol.publish_date),
-    pages: ol.number_of_pages || null,
-    language: null,
-    categories: (ol.subjects || []).slice(0,4).map(s=>s.name || s),
-    ratingsCount: 0,
-    averageRating: null,
-    cover: pickCover(isbn, null, ol),
-    listPrice: null,
-    retailPrice: null,
-    infoLink: ol.url || null,
-    source: 'Open Library',
-    matchScore: 0
-  };
+function metaFromOlData(ol,isbn){
+  const m=enrichMeta({
+    isbn:isbn||null,title:ol&&ol.title||'Tytuł nieznany',authors:(ol&&ol.authors||[]).map(a=>a.name||'').filter(Boolean).join(', ')||'Autor nieznany',
+    publisher:(ol&&ol.publishers||[])[0]?((ol.publishers[0].name||ol.publishers[0])):null,year:parseYear(ol&&ol.publish_date),pages:ol&&ol.number_of_pages||null,
+    language:null,categories:(ol&&ol.subjects||[]).slice(0,8).map(x=>x.name||x),ratingsCount:0,averageRating:null,cover:pickCover(isbn,null,ol),
+    listPrice:null,retailPrice:null,infoLink:ol&&ol.url||null,source:'Open Library',matchScore:0
+  },'');
+  return m;
 }
-
-function textScoreFor(meta, q){
-  const query = [q.title, q.text].filter(Boolean).join(' ');
-  const titleOv  = tokenOverlap(meta.title, q.title || query);
-  const cover    = distinctCoverage(meta.title + ' ' + meta.authors, query);
-  const authorOv = q.author ? tokenOverlap(meta.authors, q.author) : 0;
-  let s = titleOv*.42 + cover*.38 + authorOv*.2;
-  if(!q.author) s = titleOv*.5 + cover*.5;
-  if(meta.language === 'pl') s += .04;
-  if(meta.isbn) s += .03;
-  if(meta.cover) s += .02;
-  return Math.max(0, Math.min(1, s));
+function mergeBookMeta(a,b){
+  if(!a) return enrichMeta(b||{});
+  if(!b) return enrichMeta(a||{});
+  const use=(x,y)=>x!=null&&x!==''?x:y;
+  const merged=Object.assign({},a);
+  merged.isbn=use(a.isbn,b.isbn);
+  merged.title=(String(a.title||'').length>=String(b.title||'').length)?a.title:b.title;
+  merged.authors=use(a.authors,b.authors);
+  merged.publisher=use(a.publisher,b.publisher);
+  merged.year=use(a.year,b.year);
+  merged.pages=use(a.pages,b.pages);
+  merged.language=use(a.language,b.language);
+  merged.categories=Array.from(new Set([...(a.categories||[]),...(b.categories||[])]));
+  merged.ratingsCount=Math.max(a.ratingsCount||0,b.ratingsCount||0);
+  merged.averageRating=a.averageRating||b.averageRating||null;
+  merged.cover=a.cover||b.cover||null;
+  merged.listPrice=a.listPrice||b.listPrice||null;
+  merged.retailPrice=a.retailPrice||b.retailPrice||null;
+  merged.infoLink=a.infoLink||b.infoLink||null;
+  merged.source=Array.from(new Set(String(a.source||'').split(' + ').concat(String(b.source||'').split(' + ')).filter(Boolean))).join(' + ');
+  merged.bnId=a.bnId||b.bnId||null;
+  merged.nationalBibliographyNumber=a.nationalBibliographyNumber||b.nationalBibliographyNumber||null;
+  merged.menNumber=a.menNumber||b.menNumber||null;
+  merged.subject=a.subject||b.subject||null;
+  merged.series=a.series||b.series||null;
+  merged.level=a.level||b.level||null;
+  merged.education=Object.assign({},a.education||{},b.education||{});
+  return enrichMeta(merged);
 }
 
-/* Zbiera kandydatów z obu baz i wstępnie porządkuje po tekście. */
+function educationContextScore(meta,q){
+  const qe=q.education||extractEducationSignals([q.title,q.text,q.author,q.publisher,q.level,q.subject,q.menNumber,q.year].filter(Boolean).join(' '));
+  const me=meta.education||extractEducationSignals([meta.title,meta.authors,meta.publisher,meta.level,meta.subject,meta.menNumber,meta.year].filter(Boolean).join(' '));
+  let score=0, specified=0;
+  if(qe.publisherKey){ specified++; if(me.publisherKey===qe.publisherKey) score+=.18; else if(me.publisherKey) score-=.10; }
+  if(qe.classLevel!=null){ specified++; if(me.classLevel===qe.classLevel) score+=.12; else if(me.classLevel!=null) score-=.08; }
+  if(qe.scope){ specified++; if(me.scope===qe.scope) score+=.10; else if(me.scope) score-=.07; }
+  if(qe.subject){ specified++; if(me.subject===qe.subject) score+=.10; else if(me.subject) score-=.06; }
+  if(qe.schoolType){ specified++; if(me.schoolType===qe.schoolType) score+=.06; else if(me.schoolType) score-=.04; }
+  if(qe.menNumber){ specified++; if(meta.menNumber&&foldText(meta.menNumber)===foldText(qe.menNumber)) score+=.28; else if(meta.menNumber) score-=.18; }
+  if(qe.year && meta.year){
+    specified++;
+    const diff=Math.abs(Number(qe.year)-Number(meta.year));
+    if(diff===0) score+=.07; else if(diff<=2) score+=.035; else if(diff>=6) score-=.05;
+  }
+  if(qe.isTextbook && me.isTextbook) score+=.06;
+  if(!specified && !qe.isTextbook) return 0;
+  return Math.max(-.30,Math.min(.50,score));
+}
+function metaSearchText(meta){
+  const e=meta.education||{};
+  return [meta.title,meta.authors,meta.publisher,meta.series,meta.level,meta.subject,meta.menNumber,
+    e.publisherLabel,e.schoolType,e.scope,e.classLevel].filter(Boolean).join(' ');
+}
+function textScoreFor(meta,q){
+  const query=[q.title,q.text,q.publisher,q.level,q.subject,q.menNumber].filter(Boolean).join(' ');
+  const titleBase=q.title||q.text||'';
+  const titleOv=tokenOverlap(meta.title,titleBase);
+  const broad=distinctCoverage(metaSearchText(meta),query);
+  const authorOv=q.author?tokenOverlap(meta.authors,q.author):0;
+  const context=educationContextScore(meta,q);
+  let s=titleOv*.45+broad*.25+authorOv*.14+context*.16;
+  if(meta.language==='pl') s+=.025;
+  if(meta.isbn) s+=.015;
+  if(meta.cover) s+=.015;
+  if((meta.source||'').includes('Biblioteka Narodowa') && (q.education||extractEducationSignals(query)).isTextbook) s+=.035;
+  return Math.max(0,Math.min(1,s));
+}
+
+/* Zbiera kandydatów z trzech źródeł i scala rekordy tego samego wydania. */
 async function findEditions(q){
-  const out = [];
-  const seen = new Map();
-  const push = (meta, score)=>{
-    if(!meta || !meta.title) return;
-    const key = meta.isbn ? ('i:'+meta.isbn) : ('t:'+foldText(meta.title)+'|'+foldText(meta.authors));
-    const prev = seen.get(key);
-    if(prev){ if(score > prev.textScore) prev.textScore = score; return; }
-    const rec = {meta, textScore:score, cover:null, score:score};
-    seen.set(key, rec); out.push(rec);
+  const out=[]; const seen=new Map();
+  const push=(meta,score)=>{
+    if(!meta||!meta.title) return;
+    const key=meta.isbn?('i:'+meta.isbn):('t:'+foldText(meta.title)+'|'+foldText(meta.authors)+'|'+foldText(meta.publisher||''));
+    const prev=seen.get(key);
+    if(prev){ prev.meta=mergeBookMeta(prev.meta,meta); prev.textScore=Math.max(prev.textScore,score,textScoreFor(prev.meta,q)); prev.score=prev.textScore; return; }
+    const rec={meta:enrichMeta(meta),textScore:score,cover:null,score:score}; seen.set(key,rec); out.push(rec);
   };
+  const queryEdu=q.education||extractEducationSignals([q.title,q.text,q.publisher,q.level,q.subject,q.menNumber].filter(Boolean).join(' '));
 
   if(q.isbn){
-    const [gbRes, olRes, bnRes] = await Promise.allSettled([
-      googleBooks('isbn:' + q.isbn, 5),
-      openLibraryByIsbn(q.isbn),
-      bnByIsbn(q.isbn)
+    const [gbRes,olRes,bnRes]=await Promise.all([
+      Promise.allSettled([googleBooks('isbn:'+q.isbn,10)]),
+      openLibraryByIsbn(q.isbn).catch(()=>[]),
+      bnByIsbn(q.isbn).catch(()=>[])
     ]);
-    const ol = olRes.status === 'fulfilled' ? olRes.value : null;
-    if(gbRes.status === 'fulfilled' && gbRes.value.length){
-      const m = metaFromGoogle(gbRes.value[0], ol);
-      if(!m.isbn) m.isbn = q.isbn;
-      push(m, 1);
-    } else if(ol){
-      push(metaFromOlData(ol, q.isbn), 1);
-    } else if(bnRes.status === 'fulfilled' && bnRes.value){
-      push(bnRes.value, 1);
-    }
-    if(out.length) return out;
+    const gbItems=(gbRes[0]&&gbRes[0].status==='fulfilled')?gbRes[0].value:[];
+    const olItems=Array.isArray(olRes)?olRes:[];
+    const bnItems=Array.isArray(bnRes)?bnRes:[];
+    gbItems.forEach(item=>push(metaFromGoogle(item,olItems[0]||null),1.0));
+    olItems.forEach(item=>push(item&&item.volumeInfo?metaFromGoogle(item,null):metaFromOpenLibrary(item),.98));
+    bnItems.forEach(meta=>push(meta,1.0));
+    out.forEach(x=>{ x.score = x.meta.isbn===q.isbn ? 1 : Math.min(.88, textScoreFor(x.meta,q)*.86); });
+    if(out.length) return out.sort((a,b)=>b.score-a.score);
   }
 
-  const queries = buildBookQueries(q.title, q.author, q.text);
+  const queries=buildBookQueries(q.title,q.author,q.text,queryEdu);
   if(!queries.length) return out;
-
-  const [googleRuns, libraryRun, bnRun] = await Promise.all([
-    Promise.allSettled(queries.map(s=>googleBooks(s, 20))),
-    openLibrarySearch(q.title || (distinctWords(q.text||'').slice(0,5).join(' ')), q.author).catch(()=>[]),
-    bnSearch(q.title, q.author).catch(()=>[])
+  const googleRuns=await Promise.allSettled(queries.map(s=>googleBooks(s,20)));
+  googleRuns.filter(r=>r.status==='fulfilled').flatMap(r=>r.value||[]).forEach(item=>{
+    const meta=metaFromGoogle(item,null); push(meta,textScoreFor(meta,q)+Math.min(.06,scoreVolume(item)*.005));
+  });
+  const [libraryRun,bnRun]=await Promise.all([
+    openLibrarySearch(q.title||distinctWords(q.text||'').slice(0,5).join(' '),q.author,q.publisher).catch(()=>[]),
+    bnSearch(q.title,q.author,q.publisher,queryEdu).catch(()=>[])
   ]);
-  googleRuns.filter(r=>r.status==='fulfilled').flatMap(r=>r.value).forEach(item=>{
-    const meta = metaFromGoogle(item, null);
-    push(meta, textScoreFor(meta, q) + Math.min(.06, scoreVolume(item)*.005));
-  });
-  (libraryRun || []).forEach(doc=>{
-    const meta = metaFromOpenLibrary(doc);
-    push(meta, textScoreFor(meta, q));
-  });
-  (bnRun || []).forEach(meta=>{
-    push(meta, textScoreFor(meta, q) + 0.1);
-  });
-
+  (libraryRun||[]).forEach(doc=>push(metaFromOpenLibrary(doc),textScoreFor(metaFromOpenLibrary(doc),q)));
+  (bnRun||[]).forEach(meta=>push(meta,textScoreFor(meta,q)+.035));
   out.sort((a,b)=>b.textScore-a.textScore);
   return out;
 }
-   
-const MIN_MATCH = 0.20;      // nie odrzuca trafień ze skróconym tytułem
-const SURE_MATCH = 0.50;
-   
-/* Główna funkcja rozpoznania: tekst + weryfikacja okładką. */
+
+const MIN_MATCH=.34;
+const SURE_MATCH=.66;
+
 async function resolveSmart(cand){
-  const q = {
-    isbn: cand.isbn || null,
-    title: cand.title || '',
-    author: cand.author || '',
-    text: cand.text || cand.title || ''
+  const q={
+    isbn:cand.isbn||null,title:cand.title||'',author:cand.author||'',text:cand.text||cand.title||'',
+    publisher:cand.publisher||null,year:cand.year||null,level:cand.level||null,subject:cand.subject||null,
+    menNumber:cand.menNumber||null,series:cand.series||null,
+    education:extractEducationSignals([cand.title,cand.text,cand.author,cand.publisher,cand.level,cand.subject,cand.menNumber,cand.year].filter(Boolean).join(' '))
   };
-  const cacheKey = q.isbn ? ('i:'+q.isbn) : null;
-  if(cacheKey){
-    const hit = cacheGet(cacheKey);
-    if(hit) return {best:{meta:hit, score:1, textScore:1, cover:null}, alts:[]};
-  }
-
-  let list = [];
-  try{ list = await findEditions(q); }catch(e){ throw e; }
+  if(cand.publisher) q.education.publisherLabel=cand.publisher;
+  const cacheKey=q.isbn?('i:'+q.isbn):null;
+  if(cacheKey){ const hit=cacheGet(cacheKey); if(hit) return {best:{meta:enrichMeta(hit),score:1,textScore:1,cover:null},alts:[]}; }
+  let list=[]; try{ list=await findEditions(q); }catch(e){ throw e; }
   if(!list.length) return null;
-
-  list = list.slice(0, 10);
-
-  if(q.isbn){
-    list.forEach(x=>{ x.score = x.meta.isbn === q.isbn ? 1 : x.textScore; });
-  }
-  else if(settings.coverMatch && cand.sig){
-    const head = list.slice(0, 6);
-    await Promise.all(head.map(async x=>{
-      try{
-        const sig = await remoteCoverSignature(x.meta.cover);
-        x.cover = sigSimilarity(cand.sig, sig);
-      }catch(e){ x.cover = null; }
-    }));
+  list=list.slice(0,14);
+  if(q.isbn){ list.forEach(x=>{ x.score=x.meta.isbn===q.isbn?1:x.textScore; }); }
+  else if(settings.coverMatch&&cand.sig){
+    const head=list.slice(0,8);
+    await Promise.all(head.map(async x=>{ try{ const sig=await remoteCoverSignature(x.meta.cover); x.cover=sigSimilarity(cand.sig,sig); }catch(e){ x.cover=null; } }));
     head.forEach(x=>{
-      x.score = (x.cover == null)
-        ? x.textScore * .92
-        : Math.min(1, x.textScore*.45 + x.cover*.55 + (x.cover > .62 ? .08 : 0));
+      const context=educationContextScore(x.meta,q);
+      if(x.cover==null) x.score=x.textScore*.96 + Math.max(0,context)*.04;
+      else x.score=Math.min(1,x.textScore*.55+x.cover*.35+Math.max(0,context)*.10+(x.cover>.68?.05:0));
     });
   }
-
   list.sort((a,b)=>b.score-a.score);
-  const best = list[0];
-  best.meta.matchScore = best.score;
-  best.meta.coverMatch = best.cover;
-  if(cacheKey) cacheSet(cacheKey, best.meta);
-  return {best, alts:list.slice(1, 6).filter(x=>x.score > .18)};
+  const best=list[0]; best.meta.matchScore=best.score; best.meta.coverMatch=best.cover;
+  if(cacheKey) cacheSet(cacheKey,best.meta);
+  return {best,alts:list.slice(1,7).filter(x=>x.score>.18)};
 }
 
-/* zgodność wstecz — używane przez starsze ścieżki */
-async function resolveBook(q){
-  const r = await resolveSmart(q);
-  return r ? r.best.meta : null;
-}
+async function resolveBook(q){ const r=await resolveSmart(q); return r?r.best.meta:null; }
 
 /* ============================================================
-   SILNIK WYCENY
+   SILNIK WYCENY — rynek wtórny, z osobną logiką edukacyjną
    ============================================================ */
-const CONDITIONS = [
-  {key:'nowa',  label:'Nowa',         desc:'w folii',        mult:0.80},
-  {key:'bdb',   label:'Bardzo dobry', desc:'jak nowa',       mult:0.60},
-  {key:'dobry', label:'Dobry',        desc:'ślady czytania', mult:0.42},
-  {key:'dost',  label:'Dostateczny',  desc:'zużyta',         mult:0.26},
-  {key:'zly',   label:'Słaby',        desc:'zniszczona',     mult:0.12}
+const CONDITIONS=[
+  {key:'nowa',label:'Nowa',desc:'w folii',mult:.62},
+  {key:'bdb',label:'Bardzo dobry',desc:'jak nowa',mult:.52},
+  {key:'dobry',label:'Dobry',desc:'ślady czytania',mult:.40},
+  {key:'dost',label:'Dostateczny',desc:'zużyta',mult:.25},
+  {key:'zly',label:'Słaby',desc:'zniszczona',mult:.12}
 ];
-const CONDITION_MAP = {};
-CONDITIONS.forEach(c=>CONDITION_MAP[c.key]=c);
-
-const CHANNELS = {
-  allegro:    {mult:1.00, name:'sprzedaż prywatna (Allegro/OLX)'},
-  antykwariat:{mult:0.45, name:'skup do antykwariatu'},
-  kolekcja:   {mult:1.35, name:'rynek kolekcjonerski'}
+const CONDITION_MAP={}; CONDITIONS.forEach(c=>CONDITION_MAP[c.key]=c);
+const CHANNELS={
+  allegro:{mult:1.00,name:'sprzedaż prywatna (Allegro/OLX)'},
+  antykwariat:{mult:.45,name:'skup do antykwariatu'},
+  kolekcja:{mult:1.35,name:'rynek kolekcjonerski'}
 };
-
-/* cena katalogowa nowego egzemplarza w PLN */
+function educationMarketProfile(meta){
+  const e=meta.education||extractEducationSignals([meta.title,meta.publisher,meta.year,meta.level,meta.subject,meta.menNumber].filter(Boolean).join(' '));
+  if(!e.isTextbook) return {ratio:1,kind:'książka ogólna',currentness:'nie dotyczy',confidence:.62,factors:[]};
+  const menYearMatch=String(meta.menNumber||e.menNumber||'').match(/(20\d{2})$/);
+  const y=meta.year||(menYearMatch?Number(menYearMatch[1]):null); const now=new Date().getFullYear();
+  let ratio=.92, currentness='niepewna'; const factors=[];
+  if(y){
+    const age=now-y;
+    if(age<=2){ ratio*=1.18; currentness='nowsze wydanie — sprawdź wykaz MEN'; factors.push('nowsze wydanie edukacyjne'); }
+    else if(age<=4){ ratio*=1.02; currentness='pośrednie — sprawdź wykaz MEN'; factors.push('wydanie z ostatnich 5 lat'); }
+    else if(age<=7){ ratio*=.72; currentness='starsze — sprawdź podstawę programową'; factors.push('starsze wydanie edukacyjne'); }
+    else { ratio*=.48; currentness='stare wydanie — wysoki risk niezgodności programu'; factors.push('stare wydanie edukacyjne'); }
+  } else { ratio*=.84; currentness='brak roku — niepewna aktualność'; factors.push('brak pewnego roku wydania'); }
+  if(meta.menNumber||e.menNumber){ ratio*=1.05; factors.push('numer dopuszczenia MEN wykryty na rekordzie/okładce'); }
+  if(meta.publisher){ ratio*=1.03; factors.push('rozpoznane wydawnictwo'); }
+  if(e.scope==='podstawowy'||e.scope==='rozszerzony') factors.push('rozpoznany zakres nauczania: '+e.scope);
+  if(e.classLevel!=null) factors.push('rozpoznana klasa: '+e.classLevel);
+  return {ratio,kind:'podręcznik / materiał edukacyjny',currentness,confidence:y?0.82:0.58,factors};
+}
 function basePricePln(meta){
-  if(meta.listPrice)   return {value: toPln(meta.listPrice.amount, meta.listPrice.currency),   src:'cena katalogowa z Google Books'};
-  if(meta.retailPrice) return {value: toPln(meta.retailPrice.amount, meta.retailPrice.currency), src:'cena sprzedaży z Google Books'};
-
-  const pages = meta.pages || 300;
-  let est = 21 + pages * 0.075;
-  const cat = (meta.categories||[]).join(' ').toLowerCase();
-  if(/juvenile|children|dzieci/.test(cat)) est *= 0.8;
-  if(/medical|science|law|business|computers|technology/.test(cat)) est *= 1.45;
-  if(/art|photograph|design/.test(cat)) est *= 1.6;
-  est = Math.max(16, Math.min(160, est));
-  return {value: est, src:'szacunek na podstawie objętości i tematyki (brak ceny katalogowej w bazach)'};
-}
-
-function valuate(meta, condKey){
-  const cond = CONDITION_MAP[condKey] || CONDITION_MAP[settings.defCond] || CONDITION_MAP.dobry;
-  const base = basePricePln(meta);
-  const channel = CHANNELS[settings.channel] || CHANNELS.allegro;
-
-  let v = base.value * cond.mult * channel.mult;
-  const factors = [];
-
-  const year = meta.year;
-  if(year){
-    const age = new Date().getFullYear() - year;
-    if(age >= 60){ v *= 1.35; factors.push('wiek egzemplarza (przed ' + (new Date().getFullYear()-60) + ')'); }
-    else if(age >= 35){ v *= 1.12; factors.push('starsze wydanie'); }
-    else if(age >= 12 && age < 35){ v *= 0.88; factors.push('wydanie sprzed lat, łatwo dostępne'); }
+  if(meta.listPrice&&Number(meta.listPrice.amount)>0){
+    const src=String(meta.source||'').includes('Biblioteka Narodowa')?'cena katalogowa odnotowana w BN':'cena katalogowa z Google Books';
+    return {value:toPln(Number(meta.listPrice.amount),meta.listPrice.currency),src};
   }
-  if(meta.ratingsCount > 2000){ v *= 1.08; factors.push('tytuł popularny, szybko się sprzedaje'); }
-  else if(meta.ratingsCount === 0 && !meta.listPrice){ v *= 0.92; factors.push('mała rozpoznawalność tytułu'); }
-
-  if(meta.pages && meta.pages > 700){ v *= 1.1; factors.push('duża objętość'); }
-
-  const spread = condKey === 'nowa' ? 0.12 : 0.22;
-  const min = Math.max(2, v * (1 - spread));
-  const max = v * (1 + spread * 1.15);
-
-  return {
-    min, max, mid:v,
-    base: base.value,
-    baseSrc: base.src,
-    condition: cond,
-    channel: channel.name,
-    factors
-  };
+  if(meta.retailPrice&&Number(meta.retailPrice.amount)>0) return {value:toPln(Number(meta.retailPrice.amount),meta.retailPrice.currency),src:'cena sprzedaży z Google Books'};
+  const e=meta.education||{}; const pages=Number(meta.pages)||280; let est=24+pages*.07;
+  if(e.isTextbook){ est=30+pages*.085; if(e.scope) est*=1.06; }
+  const pub=(meta.publisher||'').toLowerCase();
+  if(/pearson|oxford|macmillan/.test(pub)) est*=1.10;
+  est=Math.max(18,Math.min(180,est));
+  return {value:est,src:'model referencyjny ceny nowego egzemplarza — brak ceny katalogowej w źródłach'};
 }
-
+function valuate(meta,condKey,manualPricePln){
+  const cond=CONDITION_MAP[condKey]||CONDITION_MAP[settings.defCond]||CONDITION_MAP.dobry;
+  const channel=CHANNELS[settings.channel]||CHANNELS.allegro;
+  const base=basePricePln(meta);
+  const market=educationMarketProfile(meta);
+  const factors=[...market.factors];
+  let v=base.value*cond.mult*channel.mult;
+  if(market.kind!=='książka ogólna') v*=market.ratio;
+  const year=meta.year; const age=year?new Date().getFullYear()-year:null;
+  if(market.kind==='książka ogólna'&&age!=null){ if(age>=70){v*=1.15;factors.push('starsze wydanie / możliwa wartość kolekcjonerska');} else if(age>=35){v*=1.06;factors.push('starsze wydanie');} }
+  if(meta.pages&&meta.pages>700){v*=1.05;factors.push('duża objętość');}
+  if(meta.ratingsCount>2000){v*=1.05;factors.push('wysoka rozpoznawalność tytułu');}
+  if(meta.education&&meta.education.subject&&/matura|egzamin/.test(foldText([meta.title,meta.level].filter(Boolean).join(' ')))){v*=1.04;factors.push('sygnał przygotowania egzaminacyjnego');}
+  let pricingConfidence=base.src.includes('brak ceny') ? market.confidence*.75 : Math.min(.96,market.confidence+.12);
+  if(manualPricePln!=null&&Number(manualPricePln)>0){
+    v=Number(manualPricePln); pricingConfidence=1; factors.unshift('ręczna korekta ceny');
+    const min=Math.max(1,v*.86), max=v*1.12;
+    return {min,max,mid:v,base:base.value,baseSrc:'ręcznie ustawiona cena sprzedaży',condition:cond,channel:channel.name,factors,pricingConfidence,marketKind:market.kind,curriculumStatus:market.currentness,manual:true};
+  }
+  const spread=condKey==='nowa'?.12:.20;
+  const min=Math.max(2,v*(1-spread)); const max=v*(1+spread*1.15);
+  return {min,max,mid:v,base:base.value,baseSrc:base.src,condition:cond,channel:channel.name,factors,pricingConfidence,marketKind:market.kind,curriculumStatus:market.currentness,manual:false};
+}
 function marketLinks(meta){
-  const q = encodeURIComponent(meta.isbn || (meta.title + ' ' + (meta.authors||'')));
-  const qt = encodeURIComponent(meta.title + ' ' + (meta.authors||''));
-  return [
-    ['Allegro',        'https://allegro.pl/listing?string=' + q],
-    ['OLX',            'https://www.olx.pl/oferty/q-' + q + '/'],
-    ['Lubimyczytać',   'https://lubimyczytac.pl/szukaj/ksiazki?phrase=' + qt],
-    ['Google Zakupy',  'https://www.google.com/search?tbm=shop&q=' + q]
+  const q=encodeURIComponent(meta.isbn||(meta.title+' '+(meta.authors||'')));
+  const qt=encodeURIComponent(meta.title+' '+(meta.authors||''));
+  const links=[
+    ['Allegro','https://allegro.pl/listing?string='+q],
+    ['OLX','https://www.olx.pl/oferty/q-'+q+'/'],
+    ['Lubimyczytać','https://lubimyczytac.pl/szukaj/ksiazki?phrase='+qt],
+    ['Google Zakupy','https://www.google.com/search?tbm=shop&q='+q]
   ];
+  if(meta.education&&meta.education.isTextbook){
+    links.push(['BN — rekord','https://data.bn.org.pl/bibs']);
+    links.push(['MEN — wykaz podręczników','https://podreczniki.men.gov.pl/']);
+  }
+  return links;
 }
 
 /* ============================================================
@@ -1728,42 +1832,56 @@ function boxContains(box, inner){
 /* ============================================================
    MODEL WIZYJNY — rozpoznanie tytułów i ocena stanu
    ============================================================ */
-const VISION_PROMPT = `Jesteś rzeczoznawcą książek używanych. Na zdjęciu jest jedna książka albo kilka książek (stos, półka, rozłożone na stole).
+const VISION_PROMPT = `Jesteś bardzo dokładnym bibliotekarzem i rzeczoznawcą rynku wtórnego książek w Polsce. Zdjęcie pokazuje jedną lub wiele fizycznych książek, podręczników, ćwiczeń, zeszytów ćwiczeń, lektur albo materiałów edukacyjnych.
 
-ZASADY — przeczytaj uważnie:
-1. Jedna pozycja w odpowiedzi = jedna fizyczna książka. NIGDY nie dziel jednej okładki na kilka pozycji. Podtytuł, nazwa serii, poziom nauczania ("zakres podstawowy i rozszerzony"), numer części, nazwa działu i nazwa wydawnictwa należą do TEJ SAMEJ książki co tytuł główny.
-2. "title" to główny tytuł z okładki, dokładnie tak jak napisany, bez nazwy wydawnictwa i bez dopisków o poziomie nauczania.
-3. Wszystko pozostałe z okładki wpisz w osobne pola: "subtitle", "series", "volume", "publisher", "year", "level".
-4. Jeśli widać ISBN albo kod kreskowy — przepisz same cyfry.
-5. "box" to ciasny prostokąt obejmujący CAŁĄ okładkę lub grzbiet tej książki: cztery liczby 0-1 względem szerokości i wysokości zdjęcia.
-6. Oceń stan fizyczny po tym, co widać: zagięcia, przetarcia grzbietu i rogów, zarysowania, zabrudzenia, pożółkłe kartki, naklejki, oderwana obwoluta.
-7. Jeśli czegoś nie widać — wpisz null. Nie zgaduj i nie uzupełniaj z pamięci.
+PRIORYTET DLA POLSKIEJ EDUKACJI:
+- Rozpoznawaj WSiP, Nowa Era, Operon, GWO, PWN, Pearson, Macmillan, Oxford, ZamKor, Greg, MAC i inne wydawnictwa.
+- NIE traktuj słów „klasa”, „zakres”, „podstawowy”, „rozszerzony”, „liceum”, „technikum”, „podręcznik”, „ćwiczenia”, „matura”, „MEN” jako szumu. Są kluczowe do rozróżniania wydań.
+- Szukaj nadrukowanego numeru dopuszczenia MEN, np. 123/4/2024. Przepisz go dokładnie, jeżeli jest widoczny. Nie zgaduj numeru z pamięci.
+- Rozpoznaj przedmiot, klasę, typ szkoły, zakres oraz serię. Zapisuj tylko to, co faktycznie widać.
+- Dla starego i nowego wydania tego samego tytułu ważniejszy jest rok, wydawnictwo, numer MEN, zakres i klasa niż ogólne podobieństwo tytułu.
 
-Odpowiedz WYŁĄCZNIE obiektem JSON, bez komentarza i bez znaczników markdown:
+ZASADY:
+1. Jedna pozycja JSON = jedna fizyczna książka. Nie dziel jednej okładki na tytuł, serię i zakres.
+2. „title” = główny tytuł z okładki, możliwie wiernie.
+3. „subtitle”, „series”, „volume”, „publisher”, „year”, „level”, „subject” i dane edukacyjne są osobnymi polami.
+4. ISBN lub EAN przepisz jako cyfry, jeśli są czytelne.
+5. „men_number” = numer dopuszczenia do użytku szkolnego tylko wtedy, gdy jest widoczny.
+6. „box” obejmuje całą fizyczną książkę/okładkę lub grzbiet w granicach zdjęcia, 0–1.
+7. Oceniaj stan wyłącznie po widocznych śladach: zagięcia, przetarcia, rogi, zabrudzenia, pisanie, podkreślenia, naklejki, pożółkłe kartki, obwoluta.
+8. Dla ćwiczeń zaznacz „workbook_filled”: true tylko wtedy, gdy widać wypełnione zadania/notatki. Nie zgaduj zawartości środka na podstawie samej okładki.
+9. Jeśli czegoś nie widać, null. Nie uzupełniaj wiedzą z pamięci.
+
+Odpowiedz WYŁĄCZNIE poprawnym JSON:
 {"books":[{
-  "title":"główny tytuł z okładki",
-  "subtitle":"podtytuł lub null",
-  "series":"seria lub null",
-  "volume":"numer części/tomu lub null",
-  "level":"np. zakres podstawowy i rozszerzony, klasa 4 — lub null",
-  "author":"autor lub null",
-  "publisher":"wydawnictwo lub null",
-  "year":"rok lub null",
-  "isbn":"same cyfry lub null",
-  "cover_type":"twarda|miekka|null",
+  "title":"...",
+  "subtitle":null,
+  "series":null,
+  "volume":null,
+  "level":null,
+  "class_level":null,
+  "school_type":null,
+  "scope":null,
+  "subject":null,
+  "author":null,
+  "publisher":null,
+  "year":null,
+  "isbn":null,
+  "men_number":null,
+  "cover_type":null,
+  "is_textbook":true,
+  "workbook_filled":false,
   "condition":"nowa|bdb|dobry|dost|zly",
-  "condition_notes":"krótko po polsku, co widać na egzemplarzu",
-  "confidence":0.0-1.0,
-  "box":[x0,y0,x1,y1]
-}]}
-Jeśli nie widać żadnej książki, zwróć {"books":[]}.`;
+  "condition_notes":"...",
+  "confidence":0.0,
+  "box":[0,0,1,1]
+}]}\nJeżeli nie ma żadnej książki, zwróć {"books":[]}.`;
 
-/* Druga tura: model dostaje sam wycinek jednej okładki i ma jedno zadanie —
-   przepisać z niej tekst możliwie wiernie. To najmocniej poprawia trafność. */
-const VISION_PROMPT_ONE = `Na zdjęciu jest okładka albo grzbiet jednej książki. Przepisz z niej dane dokładnie tak, jak są wydrukowane — litera po literze, z polskimi znakami. Nie korzystaj z wiedzy o książkach, nie poprawiaj i nie uzupełniaj tytułu z pamięci.
-
-Odpowiedz WYŁĄCZNIE obiektem JSON:
-{"books":[{"title":"...","subtitle":null,"series":null,"volume":null,"level":null,"author":null,"publisher":null,"year":null,"isbn":null,"condition":"nowa|bdb|dobry|dost|zly","condition_notes":"...","confidence":0.0-1.0}]}`;
+const VISION_PROMPT_ONE = `Na zdjęciu jest jedna polska książka, podręcznik albo materiał edukacyjny. Odczytaj wyłącznie to, co jest rzeczywiście wydrukowane na okładce.
+Nie zgaduj. Szczególnie sprawdź: tytuł, autor, wydawnictwo (np. WSiP, Nowa Era, Operon, GWO), przedmiot, klasę, typ szkoły, „zakres podstawowy/rozszerzony”, serię, rok oraz numer dopuszczenia MEN.
+Jeżeli widzisz ćwiczenia/zeszyt ćwiczeń, nie pomyl ich z podręcznikiem.
+Odpowiedz WYŁĄCZNIE JSON:
+{"books":[{"title":"...","subtitle":null,"series":null,"volume":null,"level":null,"class_level":null,"school_type":null,"scope":null,"subject":null,"author":null,"publisher":null,"year":null,"isbn":null,"men_number":null,"is_textbook":true,"workbook_filled":false,"condition":"nowa|bdb|dobry|dost|zly","condition_notes":"...","confidence":0.0}]}`;
 
 function dataUrlParts(dataUrl){
   const m = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
@@ -1841,42 +1959,30 @@ function cleanTitlePart(v){
 }
 function parseBooksJson(text){
   if(!text) return [];
-  let t = String(text).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
-  let obj = null;
-  try{ obj = JSON.parse(t); }
-  catch(e){
-    const m = t.match(/\{[\s\S]*\}/);
-    if(m){ try{ obj = JSON.parse(m[0]); }catch(e2){} }
-  }
+  let t=String(text).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+  let obj=null;
+  try{ obj=JSON.parse(t); }catch(e){ const m=t.match(/\{[\s\S]*\}/); if(m){try{obj=JSON.parse(m[0]);}catch(e2){}} }
   if(!obj) return [];
-  const arr = Array.isArray(obj) ? obj : (obj.books || obj.ksiazki || []);
-  return (Array.isArray(arr) ? arr : []).map(b=>{
-    const title    = cleanTitlePart(b.title || b.tytul);
-    const subtitle = cleanTitlePart(b.subtitle || b.podtytul);
-    const series   = cleanTitlePart(b.series || b.seria);
-    const volume   = cleanTitlePart(b.volume || b.tom);
-    const level    = cleanTitlePart(b.level || b.poziom);
-    const author   = cleanTitlePart(b.author || b.autor);
-    const publisher= cleanTitlePart(b.publisher || b.wydawnictwo);
+  const arr=Array.isArray(obj)?obj:(obj.books||obj.ksiazki||[]);
+  return (Array.isArray(arr)?arr:[]).map(b=>{
+    const title=cleanTitlePart(b.title||b.tytul), subtitle=cleanTitlePart(b.subtitle||b.podtytul), series=cleanTitlePart(b.series||b.seria),
+      volume=cleanTitlePart(b.volume||b.tom), level=cleanTitlePart(b.level||b.poziom), author=cleanTitlePart(b.author||b.autor), publisher=cleanTitlePart(b.publisher||b.wydawnictwo),
+      subject=cleanTitlePart(b.subject||b.przedmiot), schoolType=cleanTitlePart(b.school_type||b.typ_szkoly), scope=cleanTitlePart(b.scope||b.zakres);
+    const classLevel = Number.isFinite(Number(b.class_level||b.klasa)) ? Number(b.class_level||b.klasa) : extractClassLevel([level,title,subtitle].filter(Boolean).join(' '));
+    const menNumber=cleanTitlePart(b.men_number||b.men||b.nr_men)||extractMenNumber([title,subtitle,level,publisher].filter(Boolean).join(' '));
+    const textContext=[title,subtitle,series,volume,level,schoolType,scope,subject,author,publisher,menNumber].filter(Boolean).join(' ');
+    const ed=extractEducationSignals(textContext);
     return {
-      title: title || null,
-      subtitle: subtitle || null,
-      series: series || null,
-      volume: volume || null,
-      level: level || null,
-      author: author || null,
-      publisher: publisher || null,
-      year: parseYear(b.year || b.rok),
-      /* pełny kontekst dla wyszukiwarki — bez mieszania z innymi książkami */
-      text: [title, subtitle, series, volume, author, publisher].filter(Boolean).join(' '),
-      isbn: normalizeIsbn(b.isbn||''),
-      coverType: b.cover_type || null,
-      condition: CONDITION_MAP[b.condition] ? b.condition : null,
-      notes: cleanTitlePart(b.condition_notes || b.uwagi) || null,
-      confidence: typeof b.confidence === 'number' ? b.confidence : null,
-      box: Array.isArray(b.box) && b.box.length===4 && b.box.every(n=>typeof n==='number' && n>=0 && n<=1) && b.box[2]>b.box[0] && b.box[3]>b.box[1] ? b.box : null
+      title:title||null,subtitle:subtitle||null,series:series||null,volume:volume||null,level:level||null,
+      classLevel:classLevel||null,schoolType:schoolType||ed.schoolType||null,scope:scope||ed.scope||null,subject:subject||ed.subject||null,
+      author:author||null,publisher:publisher||null,year:parseYear(b.year||b.rok),
+      text:textContext,isbn:normalizeIsbn(b.isbn||''),menNumber:menNumber||null,coverType:b.cover_type||b.coverType||null,
+      isTextbook:typeof b.is_textbook==='boolean'?b.is_textbook:ed.isTextbook,workbookFilled:!!b.workbook_filled,
+      condition:CONDITION_MAP[b.condition]?b.condition:null,notes:cleanTitlePart(b.condition_notes||b.uwagi)||null,
+      confidence:typeof b.confidence==='number'?b.confidence:null,
+      box:Array.isArray(b.box)&&b.box.length===4&&b.box.every(n=>typeof n==='number'&&n>=0&&n<=1)&&b.box[2]>b.box[0]&&b.box[3]>b.box[1]?b.box:null
     };
-  }).filter(b=>b.title || b.isbn);
+  }).filter(b=>b.title||b.isbn);
 }
 
 /* ============================================================
@@ -2133,11 +2239,16 @@ function renderBookCard(entry){
     ? '<img class="book-shot" src="'+esc(entry.shot)+'" alt="Wycinek z Twojego zdjęcia" title="wycinek z Twojego zdjęcia" loading="lazy">'
     : '';
 
+  const e = m.education || {};
   const metaLine = [
     m.publisher ? '<b>Wydawca</b> ' + esc(m.publisher) : null,
     m.year ? '<b>Rok</b> ' + m.year : null,
     m.pages ? '<b>Stron</b> ' + m.pages : null,
-    m.isbn ? '<b>ISBN</b> ' + esc(m.isbn) : null
+    m.isbn ? '<b>ISBN</b> ' + esc(m.isbn) : null,
+    m.menNumber ? '<b>MEN</b> ' + esc(m.menNumber) : null,
+    e.classLevel ? '<b>Klasa</b> ' + esc(e.classLevel) : null,
+    e.scope ? '<b>Zakres</b> ' + esc(e.scope) : null,
+    e.subject ? '<b>Przedmiot</b> ' + esc(e.subject) : null
   ].filter(Boolean).join(' &nbsp;·&nbsp; ');
 
   const resultBadges = (entry.badges||[]).slice();
@@ -2157,6 +2268,8 @@ function renderBookCard(entry){
 
   const cur = settings.currency;
   const factorLine = v.factors.length ? ' Uwzględniono: ' + esc(v.factors.join(', ')) + '.' : '';
+  const manualLine = entry.manualPricePln != null ? '<p class="val-basis"><strong>Ręczna korekta:</strong> ' + money(entry.manualPricePln) + ' ' + esc(cur) + '.</p>' : '';
+  const confidenceLine = '<p class="val-basis"><strong>Model:</strong> ' + esc(v.marketKind) + '; pewność ' + (v.manual ? 'ręczna' : (v.pricingConfidence >= .82 ? 'wysoka' : v.pricingConfidence >= .65 ? 'średnia' : 'niska')) + (v.curriculumStatus && v.marketKind !== 'książka ogólna' ? '; status programu: ' + esc(v.curriculumStatus) : '') + '.</p>';
 
   return '' +
   '<div class="book-head">' + coverHtml + shotHtml +
@@ -2179,11 +2292,13 @@ function renderBookCard(entry){
     '<div class="val-side">Realna cena wywoławcza: <b>' + money(v.mid) + ' ' + esc(cur) + '</b><br>' +
       'Kanał: ' + esc(v.channel) + '</div>' +
   '</div>' +
-  '<p class="val-basis">Punkt wyjścia: nowy egzemplarz ~' + money(v.base) + ' ' + esc(cur) + ' — ' + esc(v.baseSrc) + '.' + factorLine + '</p>' +
+  '<p class="val-basis">Punkt odniesienia: nowy egzemplarz ~' + money(v.base) + ' ' + esc(cur) + ' — ' + esc(v.baseSrc) + '.' + factorLine + '</p>' +
+  confidenceLine + manualLine +
   '<div class="market-links">' + links + '</div>' +
   '<div class="book-actions">' +
     '<button class="btn small" data-act="save" type="button">' + (entry.savedId ? 'Zapisano w kartotece' : 'Zapisz w kartotece') + '</button>' +
     (entry.alts && entry.alts.length ? '<button class="btn ghost small" data-act="alts" type="button">To nie ta książka?</button>' : '') +
+    '<button class="btn ghost small" data-act="manual-price" type="button">' + (entry.manualPricePln != null ? 'Usuń korektę ceny' : 'Korekta ceny') + '</button>' +
     '<button class="btn ghost small" data-act="copy" type="button">Kopiuj opis oferty</button>' +
     '<button class="btn ghost small" data-act="share" type="button">Udostępnij</button>' +
     '<button class="btn ghost small" data-act="remove" type="button">Usuń z wyników</button>' +
@@ -2199,7 +2314,7 @@ function mountEntry(container, entry){
     (entry.shot ? '<img class="book-cover" src="'+esc(entry.shot)+'" alt="">' : '<div class="book-cover placeholder">…</div>') +
     '<div class="grow">' +
     '<h3 class="book-title">' + esc(entry.label || 'Szukam w bazach…') + '</h3>' +
-    '<p class="book-author">sprawdzam Google Books i Open Library, porównuję okładki</p></div></div>';
+    '<p class="book-author">sprawdzam Bibliotekę Narodową, Google Books i Open Library, porównuję wydania i okładki</p></div></div>';
   container.appendChild(el);
   entry.el = el;
   return el;
@@ -2224,7 +2339,7 @@ function applyAlternative(entry, idx){
 }
 
 function paintEntry(entry){
-  entry.valuation = valuate(entry.meta, entry.condition);
+  entry.valuation = valuate(entry.meta, entry.condition, entry.manualPricePln);
   entry.el.className = 'book';
   entry.el.innerHTML = renderBookCard(entry);
 
@@ -2244,6 +2359,26 @@ function paintEntry(entry){
     if(!ab) return;
     const act = ab.dataset.act;
     if(act === 'save'){ saveEntry(entry); }
+    if(act === 'manual-price'){
+      if(entry.manualPricePln != null){
+        entry.manualPricePln = null;
+        paintEntry(entry);
+        if(entry.savedId) updateSaved(entry);
+        toast('Usunięto ręczną korektę ceny');
+      }else{
+        const current = fromPln(entry.valuation.mid);
+        const raw = prompt('Ustaw cenę wywoławczą w ' + settings.currency + '. Wpisz liczbę, np. 24,90.', String(current.toFixed(2)).replace('.',','));
+        if(raw != null){
+          const n = Number(String(raw).replace(',','.').replace(/[^0-9.\-]/g,''));
+          if(Number.isFinite(n) && n > 0){
+            entry.manualPricePln = toPln(n, settings.currency);
+            paintEntry(entry);
+            if(entry.savedId) updateSaved(entry);
+            toast('Ustawiono ręczną cenę: ' + n.toFixed(2).replace('.',',') + ' ' + settings.currency);
+          }else toast('Cena musi być dodatnią liczbą');
+        }
+      }
+    }
     if(act === 'remove'){ entry.el.remove(); }
     if(act === 'copy'){ copyOffer(entry); }
     if(act === 'share'){ shareEntry(entry); }
@@ -2356,6 +2491,7 @@ function entryToRecord(entry){
     min: v.min, max: v.max, mid: v.mid,
     currency: settings.currency,
     channel: settings.channel,
+    manualPricePln: entry.manualPricePln != null ? Number(entry.manualPricePln) : null,
     sold: false,
     via: (entry.badges||[]).map(b=>b.text).join(', ')
   };
@@ -2430,7 +2566,7 @@ function renderHist(){
         '<span class="hist-title">'+esc(h.title)+'</span>' +
         '<span class="hist-sub">'+esc(h.authors)+' · '+esc(cond.label)+(h.isbn?' · '+esc(h.isbn):'')+' · '+new Date(h.ts).toLocaleDateString('pl-PL')+'</span>' +
       '</div>' +
-      '<span class="hist-price">'+money(h.min)+'–'+money(h.max)+'</span>' +
+      '<span class="hist-price">'+moneyIn(h.min,h.currency||settings.currency)+'–'+moneyIn(h.max,h.currency||settings.currency)+' '+esc(h.currency||settings.currency)+'</span>' +
       '<div class="hist-tools">' +
         '<button data-h="sold" title="'+(h.sold?'Cofnij sprzedaż':'Oznacz jako sprzedaną')+'" aria-label="Oznacz jako sprzedaną">'+(h.sold?'↺':'✓')+'</button>' +
         '<button data-h="copy" title="Kopiuj opis" aria-label="Kopiuj opis">⧉</button>' +
@@ -2481,7 +2617,7 @@ $('#exportCsvBtn').addEventListener('click', ()=>{
   const rows = hist.map(h=>[
     new Date(h.ts).toLocaleString('pl-PL'), h.title, h.authors, h.isbn, h.publisher, h.year, h.pages,
     (CONDITION_MAP[h.condition]||{}).label||h.condition,
-    fromPln(h.min).toFixed(2), fromPln(h.max).toFixed(2), fromPln(h.mid).toFixed(2), settings.currency,
+    moneyIn(h.min,h.currency||settings.currency), moneyIn(h.max,h.currency||settings.currency), moneyIn(h.mid,h.currency||settings.currency), h.currency||settings.currency,
     h.sold?'tak':'nie', h.notes||''
   ]);
   const csv = [head].concat(rows).map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(';')).join('\r\n');
@@ -2529,6 +2665,7 @@ async function processCandidate(container, cand, seenResolved){
     aiNotes: cand.notes || null,
     shot: cand.thumb || null,
     badges: cand.badges || [],
+    manualPricePln: cand.manualPricePln != null ? Number(cand.manualPricePln) : null,
     cand: cand,
     alts: [],
     savedId: null
@@ -2538,7 +2675,7 @@ async function processCandidate(container, cand, seenResolved){
     const res = await resolveSmart(cand);
     if(!res){
       failEntry(entry, cand.isbn
-        ? 'Nie znalazłem tego numeru w Google Books ani Open Library. Sprawdź cyfry albo wpisz tytuł ręcznie.'
+        ? 'Nie znalazłem wystarczających danych dla tego ISBN w Bibliotece Narodowej, Google Books ani Open Library. Sprawdź cyfry albo wpisz tytuł ręcznie.'
         : 'Nie dopasowałem tej okładki do żadnego wydania. Zrób ostrzejsze zdjęcie albo wpisz ISBN z tyłu książki.');
       return null;
     }
@@ -2564,7 +2701,7 @@ async function processCandidate(container, cand, seenResolved){
     autoSave(entry);
     return entry;
   }catch(err){
-    failEntry(entry, 'Błąd połączenia z bazą: ' + err.message);
+    failEntry(entry, 'Błąd połączenia ze źródłami danych: ' + err.message);
     return null;
   }
 }
@@ -2700,9 +2837,18 @@ async function buildCandidates(shot, prefix){
               subtitle: refined.subtitle || b.subtitle,
               series: refined.series || b.series,
               volume: refined.volume || b.volume,
+              level: refined.level || b.level,
+              classLevel: refined.classLevel || b.classLevel,
+              schoolType: refined.schoolType || b.schoolType,
+              scope: refined.scope || b.scope,
+              subject: refined.subject || b.subject,
               author: refined.author || b.author,
               publisher: refined.publisher || b.publisher,
+              year: refined.year || b.year,
               isbn: refined.isbn || b.isbn,
+              menNumber: refined.menNumber || b.menNumber,
+              isTextbook: typeof refined.isTextbook === 'boolean' ? refined.isTextbook : b.isTextbook,
+              workbookFilled: typeof refined.workbookFilled === 'boolean' ? refined.workbookFilled : b.workbookFilled,
               notes: refined.notes || b.notes,
               condition: refined.condition || b.condition,
               confidence: Math.max(b.confidence||0, refined.confidence||0),
@@ -2731,6 +2877,17 @@ async function buildCandidates(shot, prefix){
         isbn,
         title: b.title,
         author: b.author,
+        publisher: b.publisher,
+        year: b.year,
+        level: b.level,
+        classLevel: b.classLevel,
+        schoolType: b.schoolType,
+        scope: b.scope,
+        subject: b.subject,
+        series: b.series,
+        menNumber: b.menNumber,
+        isTextbook: b.isTextbook,
+        workbookFilled: b.workbookFilled,
         text: b.text || b.title,
         condition: b.condition,
         notes: b.notes,
@@ -2738,6 +2895,12 @@ async function buildCandidates(shot, prefix){
         badges: [
           {text:'rozpoznane ze zdjęcia', kind:'ai'},
           b.deep ? {text:'okładka doczytana z bliska', kind:'ai'} : null,
+          b.isTextbook ? {text:'materiał edukacyjny', kind:'ai'} : null,
+          b.publisher ? {text:b.publisher, kind:'scan'} : null,
+          b.classLevel ? {text:'klasa '+b.classLevel} : null,
+          b.scope ? {text:b.scope} : null,
+          b.menNumber ? {text:'MEN '+b.menNumber} : null,
+          b.workbookFilled ? {text:'ćwiczenia prawdopodobnie wypełnione', kind:'warning'} : null,
           b.condition ? {text:'stan oceniony automatycznie', kind:'ai'} : null,
           isbn ? {text:'ISBN z kodu kreskowego', kind:'scan'} : null,
           b.confidence != null ? {text:'pewność odczytu ' + Math.round(b.confidence*100) + '%'} : null
@@ -3017,6 +3180,7 @@ function fillSettings(){
   $('#coverMatchChk').checked = settings.coverMatch;
   $('#imgProxyChk').checked = settings.imgProxy;
   $('#strictChk').checked = settings.strict;
+  settings.bnDirect = settings.bnDirect !== false;
   $('#noKeyNotice').style.display = hasVision() ? 'none' : '';
 }
 $('#providerSel').addEventListener('change', e=>{
@@ -3092,11 +3256,12 @@ const HELP_HTML = `
 <h3>Ocena stanu</h3>
 <p>Model patrzy na przetarcia grzbietu, zagięcia rogów, zabrudzenia i pożółkłe kartki. To ocena z jednego zdjęcia, więc traktuj ją jak podpowiedź: klikając inny stan, natychmiast przeliczasz widełki.</p>
 <h3>Skąd biorą się ceny</h3>
-<p>Punktem wyjścia jest cena katalogowa nowego egzemplarza z Google Books. Gdy jej nie ma, aplikacja szacuje ją po objętości i tematyce. Potem mnoży przez współczynnik stanu, kanał sprzedaży i poprawki na wiek wydania, popularność tytułu oraz objętość.</p>
+<p>Wycena nie udaje ceny transakcyjnej: zaczyna od dostępnej ceny katalogowej/retail, a następnie stosuje współczynnik rynku wtórnego, stan, kanał sprzedaży i — dla edukacji — świeżość wydania, sygnały MEN, klasę, zakres i wydawnictwo. Dla aktualności programu aplikacja pokazuje heurystykę i daje link do oficjalnego wykazu MEN; nie traktuje samego roku jako formalnego potwierdzenia dopuszczenia.</p>
 <h3>Skróty klawiszowe</h3>
 <p><kbd>1</kbd>–<kbd>5</kbd> przełączają zakładki, <kbd>/</kbd> ustawia kursor w polu ISBN, <kbd>Ctrl</kbd>+<kbd>V</kbd> wkleja zdjęcie ze schowka, <kbd>Esc</kbd> zamyka okno.</p>
 <h3>Obsługiwane pliki</h3>
 <p>JPG, PNG, WEBP, AVIF, GIF, BMP, TIFF, HEIC/HEIF z iPhone'a oraz PDF (czytana jest pierwsza strona). Możesz wrzucić kilka zdjęć naraz — aplikacja przejdzie przez nie po kolei i pominie duplikaty.</p>
+<h3>Biblioteka Narodowa i CORS</h3><p>Zapytania do BN są wykonywane bezpośrednio do oficjalnego API. Przeglądarka nie posiada mechanizmu, który legalnie i niezawodnie omijałby CORS serwera; jeżeli serwer BN nie zwróci nagłówków CORS w danym środowisku, aplikacja przełącza się na Google Books/Open Library zamiast używać nieoficjalnego proxy.</p>
 <h3>Publikacja na GitHub Pages</h3>
 <p>Wrzuć ten plik do repozytorium jako <code>index.html</code>, w Settings → Pages wybierz gałąź <code>main</code> i katalog <code>/ (root)</code>. Strona nie potrzebuje żadnego backendu ani kroku budowania. Kamera i skaner wymagają HTTPS, które GitHub Pages daje automatycznie.</p>
 `;
@@ -3112,7 +3277,7 @@ const PRIVACY_HTML = `
 <h3>2. Jakie dane są przetwarzane</h3>
 <table class="data">
 <tr><th>Rodzaj danych</th><th>Cel</th><th>Gdzie trafiają</th></tr>
-<tr><td>Numer ISBN, tytuł, autor</td><td>Pobranie danych bibliograficznych i ceny katalogowej</td><td>Google Books, Open Library</td></tr>
+<tr><td>Numer ISBN, tytuł, autor</td><td>Pobranie danych bibliograficznych i ceny referencyjnej</td><td>Biblioteka Narodowa, Google Books, Open Library</td></tr>
 <tr><td>Zdjęcie książek</td><td>Rozpoznanie tytułów i ocena stanu egzemplarza</td><td>Wybrany dostawca modelu (Google, OpenAI, Anthropic lub OpenRouter) — wyłącznie gdy podasz klucz API</td></tr>
 <tr><td>Obraz z kamery</td><td>Odczyt kodu kreskowego</td><td>Nigdzie — analiza dzieje się w przeglądarce</td></tr>
 <tr><td>Kartoteka, ustawienia, klucz API</td><td>Zapamiętanie wycen między wizytami</td><td>localStorage tego urządzenia</td></tr>
@@ -3129,13 +3294,13 @@ const PRIVACY_HTML = `
 <p>Aplikacja nie używa plików cookie. W localStorage trzyma kartotekę, ustawienia, klucz API i podręczny bufor wyników wyszukiwania (wygasa po 30 dniach). Wszystko usuniesz przyciskiem „Wyczyść kartotekę”, „Usuń klucz” albo czyszcząc dane strony w przeglądarce.</p>
 
 <h3>6. Usługi zewnętrzne</h3>
-<p>Google Books, Open Library, Frankfurter (kursy walut), cdnjs i jsDelivr (biblioteki), Google Fonts (kroje pisma) oraz wybrany dostawca modelu widzą adres IP wynikający z połączenia. Dane mogą być przetwarzane poza Europejskim Obszarem Gospodarczym. Każda z tych usług ma własną politykę prywatności, niezależną od tego dokumentu.</p>
+<p>Biblioteka Narodowa, Google Books, Open Library, MEN (link kontrolny), Frankfurter (kursy walut), cdnjs i jsDelivr (biblioteki), Google Fonts (kroje pisma) oraz wybrany dostawca modelu widzą adres IP wynikający z połączenia. Dane mogą być przetwarzane poza Europejskim Obszarem Gospodarczym. Każda z tych usług ma własną politykę prywatności, niezależną od tego dokumentu.</p>
 
 <h3>7. Prawa użytkownika</h3>
 <p>Ponieważ aplikacja nie prowadzi rejestru użytkowników, nie ma po naszej stronie danych do wglądu ani usunięcia. W zakresie danych przetwarzanych przez wymienione usługi obowiązują ich własne polityki.</p>
 
 <h3>8. Wiarygodność wycen</h3>
-<p>Widełki są szacunkiem algorytmicznym na podstawie ceny katalogowej i deklarowanego stanu. Nie są ofertą, wyceną rzeczoznawcy ani gwarancją ceny sprzedaży.</p>
+<p>Widełki są szacunkiem algorytmicznym rynku wtórnego. Dla podręczników uwzględniają heurystyczną aktualność wydania, dane edukacyjne i stan, ale nie zastępują sprawdzenia aktualnego wykazu MEN ani realnych ofert rynkowych. Nie są ofertą, wyceną rzeczoznawcy ani gwarancją ceny sprzedaży.</p>
 
 <h3>9. Kontakt</h3>
 <p>Pytania kieruj do osoby lub podmiotu, który udostępnił Ci ten plik.</p>
@@ -3227,7 +3392,7 @@ function init(){
 window.Kartoteka = {
   version: VERSION, settings, PROVIDERS,
   resolveSmart, findEditions, ocrBooks, clusterOcrLines, groupToCandidate,
-  isGenericText, textScoreFor, tokenOverlap, distinctWords, distinctCoverage, buildBookQueries,
+  isGenericText, isEducationalText, extractEducationSignals, textScoreFor, tokenOverlap, distinctWords, distinctCoverage, buildBookQueries,
   signatureFromSource, sigSimilarity, detectBarcodes, buildCandidates, analyzePhoto
 };
 
